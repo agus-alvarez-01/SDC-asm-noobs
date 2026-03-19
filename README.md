@@ -1,2 +1,7 @@
-# SDC-asm-noobs
-Repositorio para trabajos practicos de Sistemas de Computacion - grupo asm_noobs
+# Sistemas de Computacion
+
+## UNC - FCEFyN
+
+Contenido de la materia Sistemas de Computacion - FCEFyN - UNC.
+
+Trabajos Practicos.
