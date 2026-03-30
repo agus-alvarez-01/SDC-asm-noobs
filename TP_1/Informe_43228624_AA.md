@@ -173,7 +173,7 @@ gcc -Wall -pg test_gprof.c test_gprof_new.c -o test_gprof
 
 y se obtiene el ejecutable `test_gprof`
 
-# IMG
+<img width="866" height="321" alt="image1" src="https://github.com/user-attachments/assets/0c323900-3610-474d-8258-536c506f9208" />
 
 ---
 
@@ -185,7 +185,7 @@ Paso 2: Ejecutar el código
 
 Se obtiene `gmon.out`
 
-# IMG
+<img width="866" height="453" alt="image9" src="https://github.com/user-attachments/assets/066d274e-1c32-47a9-8ed7-4df5999bda60" />
 
 ---
 
@@ -197,7 +197,7 @@ gprof test_gprof gmon.out > analysis.txt
 
 Se genera un archivo .txt con la información de perfil.
 
-# IMG
+<img width="866" height="321" alt="image7" src="https://github.com/user-attachments/assets/84c4387b-2272-488e-bb13-86d3fc1fdab9" />
 
 ---
 
@@ -292,8 +292,7 @@ Vemos como desaparece func2, que es una función estática.
 ```bash
 $ gprof -b test_gprof gmon.out > analysis.txt
 ```
-
-# IMG
+<img width="1300" height="717" alt="image2" src="https://github.com/user-attachments/assets/e7ace0c6-d7ae-4a02-a425-64c1473d918f" />
 
 Desaparecen todos los textos que explican cada columna en las tablas.
 
@@ -302,29 +301,29 @@ Desaparecen todos los textos que explican cada columna en las tablas.
 $ gprof -p -b test_gprof gmon.out > analysis.txt
 ```
 
-# IMG
+<img width="1290" height="700" alt="image5" src="https://github.com/user-attachments/assets/38d7fcdf-8b36-4867-a5f5-cc153d69d6ad" />
 
 **4. Imprimir información relacionada con funciones específicas en perfil plano**
 ```bash
 $ gprof -pfunc1 -b test_gprof gmon.out > analysis.txt
 ```
+<img width="1290" height="700" alt="image6" src="https://github.com/user-attachments/assets/771ac8af-86ae-4f64-a5c6-04ee7d4aec86" />
+
 
 ### Genere un gráfico con gprof2dot 
 ```bash
 $ gprof ./test_gprof gmon.out | gprof2dot |dot -Tpng -o img.png
 ```
-
-# IMG
-
+<img width="1304" height="674" alt="image8" src="https://github.com/user-attachments/assets/d586564d-1090-41d5-b5d9-6e5aef093b93" />
 
 ## Profiling con linux perf
 ```bash
 $ sudo perf record ./test_gprof
 ```
+<img width="936" height="431" alt="image4" src="https://github.com/user-attachments/assets/e9a7637b-0889-4c24-897b-3369bcc51c6b" />
 
-# IMG
 
 ```bash
 $ sudo perf report
 ```
-# IMG
+<img width="866" height="761" alt="image3" src="https://github.com/user-attachments/assets/cd1962b9-94ab-4efd-80fc-3e179e175931" />
