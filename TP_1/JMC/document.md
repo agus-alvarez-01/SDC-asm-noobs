@@ -340,6 +340,12 @@ Each sample counts as 0.01 seconds.
 100.29      6.25     6.25        1     6.25     6.25  func1
 ```
 
-### 3.3. Conclusión
+### 3.3. Visualización del perfil con gprof2dot
+
+Como complemento del análisis textual, se generó una visualización del call graph a partir de la salida de `gprof` usando `gprof2dot`.
+
+![Visualización del perfil de gprof](attachments/gprof.png)
+
+### 3.4. Conclusión
 
 El proceso de Time profiling permitió identificar rápidamente dónde se concentra el tiempo de CPU. En todos los reportes `func1` aparece como la función dominante, mientras que `func2` y `new_func1` tienen menor impacto relativo. Las distintas flags de `gprof` no cambian el comportamiento del programa, pero sí la forma en que se presenta la información, permitiendo pasar de un reporte completo a uno resumido o filtrado por función.
