@@ -268,7 +268,15 @@ Se utiliza el registro `xmm0` para pasar el argumento float siguiendo la convenc
 
 > SSE The class consists of types that fit into a vector register.  
 > Arguments of types float, double, _Decimal32, _Decimal64 and __m64 are in class SSE.  
-> If the class is SSE, the next available vector register is used, the registers are taken in the order from %xmm0 to %xmm7.  
+> If the class is SSE, the next available vector register is used, the registers are taken in the order from %xmm0 to %xmm7.
+
+Podemos verificar la exportacion correcta de la funcion buscando el simbolo `gini_convert`:
+
+```bash
+hive@hive-MS-7B84:~/Documents/SC/SDC-asm-noobs/TP_2/IT_2$ gcc -c gini_calc.S -o gini_calc.o
+hive@hive-MS-7B84:~/Documents/SC/SDC-asm-noobs/TP_2/IT_2$ nm gini_calc.o | grep gini_convert
+0000000000000000 T gini_convert
+```
 
 #### C
 
@@ -280,6 +288,46 @@ El cambio respecto a la Iteracion #1 es que reemplazamos la implementacion propi
 extern int gini_convert(float gini_value);
 ```
 
+#### Ejecucion
+
+Ajustamos el Makefile realizado en la iteracion anterior para incluir el compilado del codigo en assembler:
+
+```Makefile
+CC      = gcc
+CFLAGS  = -g3 -fPIC -O0
+LDFLAGS = -shared
+
+all: libgini.so
+
+gini_calc.o: gini_calc.S
+	$(CC) $(CFLAGS) -c gini_calc.S -o gini_calc.o
+
+libgini.so: gini_calc.c gini_calc.o
+	$(CC) $(CFLAGS) $(LDFLAGS) -o libgini.so gini_calc.c gini_calc.o
+
+clean:
+	rm -f gini_calc.o libgini.so
+```
+
+Con esto podemos construir la libreria compartida y ejecutar el programa:
+
+```bash
+hive@hive-MS-7B84:~/Documents/SC/SDC-asm-noobs/TP_2/IT_2$ make
+gcc -g3 -fPIC -O0 -c gini_calc.S -o gini_calc.o
+gcc -g3 -fPIC -O0 -shared -o libgini.so gini_calc.c gini_calc.o
+hive@hive-MS-7B84:~/Documents/SC/SDC-asm-noobs/TP_2/IT_2$ python3 gini_api.py
+Año    GINI (float)     GINI (int) + 1
+------------------------------------
+2011   42.70            43
+2012   41.40            42
+2013   41.10            42
+2014   41.80            42
+2016   42.30            43
+2017   41.40            42
+2018   41.70            42
+2019   43.30            44
+2020   42.70            43
+```
 ---
 
 ### Call Conventions
