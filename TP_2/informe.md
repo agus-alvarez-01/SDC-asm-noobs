@@ -419,7 +419,23 @@ Al salir de `gini_convert` se desapila el frame del stack.
 
 ### Dificultades
 
-...
+#### Iteracion Uno
+
+Durante la iteracion uno se presento una dificultad al navegar la API de World Bank.
+
+La misma no estaba dejando filtrar por pais de la forma en que estaba presentado en la consigna, y la documentacion no es sencilla de encontrar.
+
+Eventualmente conseguimos acceder a ella, donde descubrimos muchas optimizaciones que podiamos realizar al llamado del recurso.
+
+De esta forma logramos simplicar la URI y obtener los resultados prefiltrados por pais para reducir el procesamiento realizado.
+
+#### Iteracion Dos
+
+Durante la iteracion dos se presento una dificultad al desarrollar el programa en assembler. 
+
+El mismo habia sido desarrollado con la extension `.asm` y sintaxis de Intel, la cual es utilizada para la compilacion de assembler con NASM.
+
+Sin embargo, estamos utilizando gcc dentro del entorno de desarrollo de Linux, por lo que nos encontramos varios errores que resolvimos ajustando la extension hacia `.S` y utilizando la sintaxis de AT&T.
 
 ---
 
