@@ -431,8 +431,8 @@ Al salir de `gini_convert` se desapila el frame del stack.
 
 ### Referencias
 
-[] - [World Bank API](https://datahelpdesk.worldbank.org/knowledgebase/topics/125589-developer-information)
+> [World Bank API](https://datahelpdesk.worldbank.org/knowledgebase/topics/125589-developer-information)
 
-[] - [System V Application Binary Interface - AMD64 Architecture Processor Supplement - Draft Version 0.99.6](https://refspecs.linuxbase.org/elf/x86_64-abi-0.99.pdf)
+> [System V Application Binary Interface - AMD64 Architecture Processor Supplement - Draft Version 0.99.6](https://refspecs.linuxbase.org/elf/x86_64-abi-0.99.pdf)
 
-[] - [GDB-Dashboard](https://github.com/cyrus-and/gdb-dashboard)
+> [GDB-Dashboard](https://github.com/cyrus-and/gdb-dashboard)
