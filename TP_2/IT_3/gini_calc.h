@@ -1,0 +1,1 @@
+int gini_convert(float gini_value);
