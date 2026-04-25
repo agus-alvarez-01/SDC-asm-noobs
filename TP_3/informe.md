@@ -161,7 +161,28 @@ Finalmente tiene mas vida util del hardware añadiendo soporte para nuevas funci
 
 ### Desafio: Modo Protegido
 
-...
+El modo protegido es un modo de operacion fundamental en los procesadores de la arquitectura x86.
+
+Se llama protegido porque fue diseñado especificamente para proteger a los programas y al sistema operativo para que no interfieran entre si. 
+
+Antes de que existiera este modo, los procesadores funcionaban en Modo Real donde cualquier programa podia acceder a cualquier parte de la memoria del sistema. Si un programa fallaba o estaba mal escrito, podia sobreescribir la memoria del sistema operativo y hacer que toda la computadora colapsara.
+
+El modo protegido soluciono esto introduciendo barreras estrictas y reglas de acceso.
+
+#### Transicion a Modo Protegido
+
+Para pasar a modo protegido debemos realizar lo siguiente:
+- Deshabilitar interrupciones 
+- Cargar la GDT
+- Fijar el bit más bajo del CR0 en 1
+- Saltar a la sección de código de 32bits
+- Configurar el resto de los segmentos 
+
+Esto lo podemos realizar con el siguiente codigo:
+
+```NASM
+
+```
 
 ---
 
