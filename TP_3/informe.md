@@ -33,6 +33,29 @@ La comparación nos permite ver el programa desde dos perspectivas:
 **¿Para qué se utiliza la opción --oformat binary en el linker?**
 Se utiliza para generar un archivo binario "plano" (flat binary). Por defecto, los linkers modernos generan archivos en formato ELF o PE, que contienen encabezados complejos con metadatos para el sistema operativo. En un entorno bare-metal, no hay un sistema operativo para leer esos encabezados; el procesador simplemente empieza a ejecutar bytes uno tras otro. La opción `--oformat binary` elimina toda esa estructura extra y deja únicamente las instrucciones de máquina puras, que es lo único que el CPU puede procesar en modo real.
 
+**Grabar la imagen en un pendrive y probarla en una PC**
+
+Para llevar nuestro código bare-metal a un entorno físico, el primer paso es compilar y enlazar el código fuente. Desde nuestra terminal en Linux, ejecutamos la siguiente secuencia:
+
+* **Ensamblado:** `as -g -o main.o main.S`
+    Este comando utiliza el GNU Assembler para traducir nuestro código fuente (`main.S`) a código objeto (`main.o`), incluyendo información de depuración mediante la bandera `-g`.
+* **Enlazado:** `ld --oformat binary -o main.img -T link.ld main.o`
+    El GNU Linker toma el archivo objeto y, aplicando las reglas matemáticas de nuestro script `link.ld`, ubica el código en la dirección de memoria correcta (`0x7c00`), generando un archivo binario puro (`main.img`).
+
+Una vez obtenida la imagen booteable, procedemos a transferirla al pendrive. Es fundamental desmontar la unidad previamente para evitar conflictos con el sistema operativo:
+
+* **Desmontaje:** `sudo umount /dev/sdb1`
+* **Escritura a bajo nivel:** `sudo dd if=main.img of=/dev/sdb status=progress`
+    La herramienta `dd` toma nuestra imagen y escribe sus bytes exactos directamente en el primer sector físico del USB (`/dev/sdb`), ignorando cualquier sistema de archivos previo y convirtiendo al dispositivo en un disco de arranque válido (MBR).
+
+![Captura de terminal con los comandos de compilación y flasheo](Screenshot_20260426_225116.png)
+
+Finalmente, procedimos a probar el pendrive booteable. Para sortear las restricciones del firmware UEFI de las notebooks modernas, utilizamos una computadora de escritorio. Las placas madre de escritorio suelen ofrecer módulos CSM (Compatibility Support Module) más robustos, permitiendo emular a la perfección el arranque *Legacy* de 16 bits. 
+
+Al encender el equipo y seleccionar el pendrive en el menú de arranque, el procesador inició en modo real, ejecutó nuestras instrucciones nativamente y logró imprimir la cadena de texto con éxito antes de entrar en un estado de detención controlada (`hlt`).
+
+![Monitor mostrando el texto Hello World! (a medias) ejecutándose en el hardware físico](20260426_231746.jpg)
+
 ---
 
 ### Depuracion con GDB + QEMU
