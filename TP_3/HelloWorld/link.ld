@@ -1,18 +1,16 @@
 SECTIONS
 {
-    /* Establece el "location counter" (contador de ubicacion actual) en la direccion fisica 0x7C00. */
+    /* Establece el location counter en la direccion fisica 0x7C00. */
     /* Es la direccion de memoria exacta donde la BIOS carga el sector de arranque. */
     . = 0x7C00;
     
     /* Define la seccion de salida '.text', que contendra nuestro codigo ejecutable. */
     .text :
     {
-        /* Crea un simbolo llamado '__start' y le asigna la direccion actual (0x7C00). */
-        /* Esto es extremadamente util para tener una referencia visual y depurar con GDB. */
+        /* Crea un simbolo llamado '__start' y le asigna la direccion actual (0x7C00) */
         __start = .;
         
-        /* Le indica al linker que tome todas las secciones '.text' de los archivos .o de entrada */
-        /* y las pegue exactamente aqui, una tras otra. */
+        /* Le indica al linker que tome todas las secciones '.text' de los archivos .o de entrada y las pegue aqui */
         *(.text)
         
         /* Mueve el location counter exactamente 510 bytes (0x1FE en hexadecimal) hacia adelante, */

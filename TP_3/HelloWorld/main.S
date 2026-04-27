@@ -1,16 +1,37 @@
-.code16                     # Directiva para el ensamblador: generar codigo maquina de 16 bits (Modo Real).
-    mov $msg, %si           # Carga la direccion de memoria donde esta el texto (etiqueta 'msg') en el registro SI (Source Index).
-    mov $0x0E, %ah          # Carga el valor 0x0E en el registro AH. Es el codigo de la funcion BIOS para "Teletype output" (imprimir caracter).
+.code16
+.section .text
+.global _start
 
-loop:                       # Etiqueta que marca el inicio del bucle de impresion.
-    lodsb                   # Carga el byte al que apunta el registro SI en el registro AL, y automaticamente incrementa SI al siguiente byte.
-    or %al, %al             # Operacion logica OR entre AL y si mismo. No cambia el valor de AL, pero sirve para actualizar las banderas del procesador.
-    jz halt                 # Salta (Jump if Zero) a la etiqueta 'halt' si la operacion anterior dio 0 (es decir, si el caracter actual es el terminador nulo).
-    int $0x10               # Ejecuta la interrupcion 0x10 de la BIOS. Como AH tiene 0x0E, la BIOS sabe que debe imprimir en pantalla el caracter alojado en AL.
-    jmp loop                # Salto incondicional de vuelta a 'loop' para continuar con la siguiente letra.
+_start:
+    ljmp $0, $real_start    # Asegura que empecemos a leer en la dirección de memoria correcta
 
-halt:                       # Etiqueta para el final del programa.
-    hlt                     # Instruccion Halt: detiene el procesador hasta que ocurra una interrupcion por hardware (ahorra energia y evita ejecutar basura de la RAM).
+real_start:
+    jmp skip_bpb            # Salta un área que la BIOS suele sobrescribir por accidente
+    .space 90, 0            # Deja 90 bytes de espacio vacío como medida de seguridad
 
-msg:                        # Etiqueta que le da un nombre a la posicion de memoria de nuestro texto.
-    .asciz "Hello, World!"  # Directiva que inserta los caracteres en memoria y les anade automaticamente un byte 0x00 al final (null-terminated string).
+skip_bpb:
+    /* Preparamos la memoria y la pila (stack) */
+    xor %ax, %ax            # Pone el registro AX en 0
+    mov %ax, %ds            # Segmento de datos en 0
+    mov %ax, %es            # Segmento extra en 0
+    mov %ax, %ss            # Segmento de pila en 0
+    mov $0x7C00, %sp        # Prepara la memoria temporal justo debajo de nuestro código
+
+    /* Preparamos el mensaje */
+    mov $msg, %si           # Apunta a la primera letra de nuestro texto
+    mov $0x0E, %ah          # Le avisa a la BIOS que queremos mostrar texto en pantalla
+
+loop:
+    lodsb                   # Lee una letra y avanza automáticamente a la siguiente
+    or %al, %al             # Revisa si la letra es un cero (lo que indica el fin del texto)
+    jz halt                 # Si es cero, salta al final y termina
+    int $0x10               # Le dice a la BIOS: "¡Imprime esta letra!"
+    jmp loop                # Vuelve arriba para procesar la siguiente letra
+
+halt:
+    cli                     # Apaga las interrupciones para que nada moleste al sistema
+    hlt                     # Congela el procesador para ahorrar energía
+    jmp halt                # Bucle infinito por si el procesador se despierta por error
+
+msg:
+    .asciz "hello from asm_noobs" # Nuestro texto (la 'z' final le agrega el cero oculto al terminar)
