@@ -466,7 +466,7 @@ Podemos utilizar QEMU para verificar la transicion correcta hacia el modo proteg
 
 De esta forma inicializamos QEMU con un monitor en nuestra terminal, lo que nos permite ejecutar `info registers` y verificar que el valor de `CRO` en `00000011`:
 
-IMAGENNNNNNNNNNNNNNNNNNNNNNNNNN
+<img width="1714" height="671" alt="Screenshot from 2026-04-27 19-48-46" src="https://github.com/user-attachments/assets/d61b38c0-e1ff-42b1-95e0-e24a92e5c34b" />
 
 #### Marco Teorico
 
@@ -587,7 +587,7 @@ Lo que esta ocurriendo es que cuando la ejecución llega a la instrucción de es
 
 Ejecutamos nuevamente QEMU, ahora con las opciones `-no-reboot -d int` para evitar un loop de crashes infinito y observamos:
 
-IMAGENNNNNNNNNNNNNNNNNNNNNNNNNNN
+<img width="822" height="385" alt="Screenshot from 2026-04-27 20-14-14" src="https://github.com/user-attachments/assets/6bd8478e-9bc4-487b-80ae-89ca7c1e891c" />
 
 En la linea `0: v=0d e=0010 i=0 cpl=0 IP=0008:00007c4a pc=00007c4a SP=0000:00007c00 env->regs[R_EAX]=00000010` se produce el error.
 Podemos ver como se regresa hacia modo real en el error, y los valores `v=0d` y `e=0010` indican la excepcion 13 General Protection Fault (GPF) en el descrito 0x10 que es el descriptor de datos.
@@ -601,7 +601,19 @@ Esto tambien podemos verificarlo con GDB inicializando un servidor GDB y conecta
 
 Ejecutando paso a paso obtuvimos el crash:
 
-imagenes
+<img width="2070" height="388" alt="Screenshot from 2026-04-27 21-41-55" src="https://github.com/user-attachments/assets/be5c5bcd-777f-48b8-b30a-f925cf233945" />
+
+<img width="2070" height="356" alt="Screenshot from 2026-04-27 21-42-34" src="https://github.com/user-attachments/assets/322e2b02-fcdf-465c-b3db-8dad139dda78" />
+
+<img width="2070" height="223" alt="Screenshot from 2026-04-27 22-41-51" src="https://github.com/user-attachments/assets/2c8a12a3-0ae6-413e-949b-2f2a7d48e282" />
+
+> En modo protegido, ¿Con qué valor se cargan los registros de segmento ? ¿Porque?
+
+En la arquitectura x86, cuando el procesador opera en modo protegido, los registros de segmento no se cargan con direcciones de memoria física directas, sino con un valor de 16 bits llamado Selector de Segmento. Este valor funciona simplemente como un índice que le indica a la CPU en qué tabla especial del sistema (como la GDT o la LDT) debe buscar, y contiene además un par de bits que representan el nivel de privilegio con el que el programa intenta acceder a esa memoria.
+
+El motivo de utilizar este selector es introducir un nivel de indirección necesario para acceder al Descriptor de Segmento. La entrada en la tabla a la que apunta el selector contiene este descriptor, el cual es gestionado de manera exclusiva por el sistema operativo; allí es donde realmente se almacena la dirección física base real, el límite de tamaño permitido para ese segmento y los permisos de acceso (como si es de solo lectura, escritura o ejecución).
+
+Todo este mecanismo se diseñó fundamentalmente por razones de seguridad y estabilidad. Al aislar las direcciones reales mediante selectores y descriptores, el hardware del procesador puede validar cada acceso a la memoria en tiempo real, bloqueando cualquier intento de un programa de leer o sobrescribir datos fuera de sus límites asignados (lo que genera un Fallo de Segmento) o de acceder a áreas críticas del núcleo del sistema operativo.
 
 ### Referencias
 
