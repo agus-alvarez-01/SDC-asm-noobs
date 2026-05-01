@@ -81,7 +81,7 @@ Dentro de UEFI podemos ejecutar `dh -b` para realizar un "Dump Handle" que impri
 El `-b` le dice a la consola que haga una pausa cada vez que se llene la pantalla para scrollear el contenido.
 
 > [!IMPORTANT]
-> Screenshot de ingresar a dh -b aqui
+> Screenshot de dh -b aqui
 
 > **Pregunta de Razonamiento:**  
 > Al ejecutar el comando map y dh, vemos protocolos e identificadores en lugar de puertos de hardware fijos.  
@@ -90,6 +90,46 @@ El `-b` le dice a la consola que haga una pausa cada vez que se llene la pantall
 Este modelo reemplaza la comunicación directa y predecible por interfaces lógicas. 
 Esto otorga compatibilidad al independizar el software de la arquitectura física del hardware, 
 y brinda seguridad al obligar a todo el código a someterse a mecanismos de verificación (como Secure Boot) antes de concederle acceso a los recursos del sistema.
+
+#### Análisis de Variables Globales (NVRAM)
+
+La fase BDS (Boot Device Selection) decide qué cargar basándose en variables no volátiles.
+
+A diferencia del viejo BIOS, que guardaba su configuración en un chip CMOS muy limitado, UEFI utiliza un sistema avanzado de variables para almacenar configuraciones del sistema, claves de seguridad y órdenes de arranque en NVRAM.
+
+Con el comando `dmpstore` podemos imprimir en pantalla todo el contenido de la NVRAM de la UEFI. 
+Aquí es donde el firmware guarda datos que deben sobrevivir a los reinicios, como el orden de booteo, las configuraciones del hardware y las bases de datos de claves criptográficas del Secure Boot.
+
+> [!IMPORTANT]
+> Screenshot de dmpstore aqui
+
+Con el comando `set TestSeguridad "Hola UEFI"` podemos crear una variable de entorno persistente en NVRAM llamada TestSeguridad con el valor "Hola UEFI". 
+Al ejecutar el comando `set` que muestra la lista de variables del sistema podemos visualizarla.
+
+> [!IMPORTANT]
+> Screenshot de set -v aqui
+
+> [!NOTE]
+> El comando `set -v` es equivalente a realizar `set`.  
+> El modificador `-v` solo impacta en la creacion de variables para tornarlas volatiles.
+
+> **Pregunta de Razonamiento:**  
+> Observando las variables Boot#### y BootOrder  
+> ¿Cómo determina el Boot Manager la secuencia de arranque?
+
+El Boot Manager lee BootOrder para saber en qué orden debe buscar, y luego consulta las variables Boot#### individuales para saber qué archivo ejecutar y dónde encontrarlo en el hardware.
+
+Podemos ejecutar `dmpstore` para visualizar el contenido de las variables.
+
+> [!IMPORTANT]
+> Screenshot de dmpstore aqui
+
+Vemos como la variable BootOrder en Little-Endian tiene como primera opcion de boot a Boot0000, seguido de 0001, 0002 y 0003.
+
+Luego podemos ver a la derecha de cada variable Boot#### un indicio de que representan.
+
+> [!IMPORTANT]
+> Screenshot de dmpstore aqui
 
 ### Desarrollo, compilación y análisis de seguridad
 
@@ -101,4 +141,6 @@ y brinda seguridad al obligar a todo el código a someterse a mecanismos de veri
 
 ### Referencias
 
-> ...
+> [UEFI](https://uefi.org/specs/UEFI/2.10/index.html)
+
+> [UEFI Shell](https://uefi.org/sites/default/files/resources/UEFI_Shell_2_2.pdf)
