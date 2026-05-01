@@ -37,6 +37,60 @@ Como no se especifica ningún disco duro o imagen ISO, la máquina enciende en l
 > [!IMPORTANT]
 > Screenshot de QEMU UEFI startup aqui
 
+#### Exploración de Dispositivos (Handles y Protocolos)
+
+UEFI no usa letras de unidad fijas (como C:). Mantiene una base de datos de "Handles" (identificadores) que agrupan "Protocolos" (interfaces de software como SIMPLE_FILE_SYSTEM).
+
+Podemos utilizar comandos dentro de la Shell de UEFI para explorar estos handles y protocolos.
+
+Con `map` mostramos una lista de todos los dispositivos de almacenamiento y sistemas de archivos que la UEFI ha detectado. Es el equivalente a abrir "Este equipo" en Windows para ver qué discos o pendrives están conectados.
+
+> [!IMPORTANT]
+> Screenshot de map aqui
+
+Aqui solo podemos visualizar una entrada `BLK0` (Block Device 0) que es un dispositivo de hardware en bruto, estimamos el chip de memoria flash virtual donde reside la UEFI (el archivo OVMF.fd).
+
+Esto es porque el comando que utilizamos para inicializar QEMU le dio memoria RAM (-m 512) y una placa madre con UEFI (-bios) pero no un disco duro ni un pendrive.
+
+`FS0` (File System 0) dsolo aparece cuando la UEFI detecta un dispositivo que tiene un sistema de archivos que puede leer (casi siempre FAT32). Como no hay ningún disco conectado, no hay ningún sistema de archivos para leer.
+
+Esto lo podemos solucionar fabricando un disco duro en blanco, formateandolo con FAT32, y conectandolo en la ejecucion de QEMU.
+
+```bash
+dd if=/dev/zero of=disk.img bs=1M count=64
+mkfs.vfat disk.img
+qemu-system-x86_64 -m 512 -bios /usr/share/ovmf/OVMF.fd -drive format=raw,file=disk.img -net none
+```
+
+> [!IMPORTANT]
+> Screenshot de map con FS0 aqui
+
+Con el disco adicionado, conseguimos observar el sistema de archivos `FS0`, donde ingresando el nombre del handler seguido de `:` conseguimos entrar a el.
+
+> [!IMPORTANT]
+> Screenshot de ingresar a FS0 aqui
+
+Luego podemos ejecutar `ls` para visualizar el contenido, donde observamos solo un archivo presente de 10549 bytes.
+
+> [!IMPORTANT]
+> Screenshot de ls aqui
+
+Este es el archivo `NvVars`, un documento generado de forma automática por el firmware UEFI (OVMF) durante el proceso de arranque que sirve como almacenamiento de emergencia para guardar las variables y configuraciones del sistema ya que el firmware se cargó en modo de solo lectura y necesita un espacio donde escribir esa información.
+
+Dentro de UEFI podemos ejecutar `dh -b` para realizar un "Dump Handle" que imprime en pantalla información técnica sobre todos los handles y protocolos activos en el sistema. 
+El `-b` le dice a la consola que haga una pausa cada vez que se llene la pantalla para scrollear el contenido.
+
+> [!IMPORTANT]
+> Screenshot de ingresar a dh -b aqui
+
+> **Pregunta de Razonamiento:**  
+> Al ejecutar el comando map y dh, vemos protocolos e identificadores en lugar de puertos de hardware fijos.  
+> ¿Cuál es la ventaja de seguridad y compatibilidad de este modelo frente al antiguo BIOS?
+
+Este modelo reemplaza la comunicación directa y predecible por interfaces lógicas. 
+Esto otorga compatibilidad al independizar el software de la arquitectura física del hardware, 
+y brinda seguridad al obligar a todo el código a someterse a mecanismos de verificación (como Secure Boot) antes de concederle acceso a los recursos del sistema.
+
 ### Desarrollo, compilación y análisis de seguridad
 
 ...
