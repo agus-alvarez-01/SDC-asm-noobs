@@ -34,8 +34,7 @@ qemu-system-x86_64 -m 512 -bios /usr/share/ovmf/OVMF.fd -net none
 Esta combinación de parámetros nos da un entorno ligero, de arranque rápido y completamente aislado por seguridad. 
 Como no se especifica ningún disco duro o imagen ISO, la máquina enciende en la consola interactiva de UEFI (la UEFI Shell).
 
-> [!IMPORTANT]
-> Screenshot de QEMU UEFI startup aqui
+<img width="1042" height="925" alt="Screenshot from 2026-05-01 14-38-20" src="https://github.com/user-attachments/assets/01fd327d-6d4e-45ab-bbc2-a1337e9c9137" />
 
 #### Exploración de Dispositivos (Handles y Protocolos)
 
@@ -45,8 +44,7 @@ Podemos utilizar comandos dentro de la Shell de UEFI para explorar estos handles
 
 Con `map` mostramos una lista de todos los dispositivos de almacenamiento y sistemas de archivos que la UEFI ha detectado. Es el equivalente a abrir "Este equipo" en Windows para ver qué discos o pendrives están conectados.
 
-> [!IMPORTANT]
-> Screenshot de map aqui
+<img width="647" height="307" alt="Screenshot from 2026-05-01 15-54-16" src="https://github.com/user-attachments/assets/3c434b8f-e456-408c-988b-b67075606b80" />
 
 Aqui solo podemos visualizar una entrada `BLK0` (Block Device 0) que es un dispositivo de hardware en bruto, estimamos el chip de memoria flash virtual donde reside la UEFI (el archivo OVMF.fd).
 
@@ -62,26 +60,22 @@ mkfs.vfat disk.img
 qemu-system-x86_64 -m 512 -bios /usr/share/ovmf/OVMF.fd -drive format=raw,file=disk.img -net none
 ```
 
-> [!IMPORTANT]
-> Screenshot de map con FS0 aqui
+<img width="1324" height="973" alt="Screenshot from 2026-05-01 15-18-31" src="https://github.com/user-attachments/assets/87729c3f-a6bf-40d0-8e59-6925c1c43ba4" />
 
 Con el disco adicionado, conseguimos observar el sistema de archivos `FS0`, donde ingresando el nombre del handler seguido de `:` conseguimos entrar a el.
 
-> [!IMPORTANT]
-> Screenshot de ingresar a FS0 aqui
+<img width="610" height="355" alt="Screenshot from 2026-05-01 15-22-12" src="https://github.com/user-attachments/assets/40041ae4-891c-4f69-b708-78e8c10e4c31" />
 
-Luego podemos ejecutar `ls` para visualizar el contenido, donde observamos solo un archivo presente de 10549 bytes.
+Luego podemos ejecutar `ls` para visualizar el contenido, donde observamos solo un archivo presente de 10k bytes.
 
-> [!IMPORTANT]
-> Screenshot de ls aqui
+<img width="634" height="363" alt="Screenshot from 2026-05-01 18-24-27" src="https://github.com/user-attachments/assets/b7e27755-a699-4dd3-aef3-f93f6405467a" />
 
 Este es el archivo `NvVars`, un documento generado de forma automática por el firmware UEFI (OVMF) durante el proceso de arranque que sirve como almacenamiento de emergencia para guardar las variables y configuraciones del sistema ya que el firmware se cargó en modo de solo lectura y necesita un espacio donde escribir esa información.
 
 Dentro de UEFI podemos ejecutar `dh -b` para realizar un "Dump Handle" que imprime en pantalla información técnica sobre todos los handles y protocolos activos en el sistema. 
 El `-b` le dice a la consola que haga una pausa cada vez que se llene la pantalla para scrollear el contenido.
 
-> [!IMPORTANT]
-> Screenshot de dh -b aqui
+<img width="702" height="510" alt="Screenshot from 2026-05-01 15-51-40" src="https://github.com/user-attachments/assets/2e00556d-bbd2-491f-9089-fdea4c45e9d5" />
 
 > **Pregunta de Razonamiento:**  
 > Al ejecutar el comando map y dh, vemos protocolos e identificadores en lugar de puertos de hardware fijos.  
@@ -108,14 +102,12 @@ A diferencia del viejo BIOS, que guardaba su configuración en un chip CMOS muy 
 Con el comando `dmpstore` podemos imprimir en pantalla todo el contenido de la NVRAM de la UEFI. 
 Aquí es donde el firmware guarda datos que deben sobrevivir a los reinicios, como el orden de booteo, las configuraciones del hardware y las bases de datos de claves criptográficas del Secure Boot.
 
-> [!IMPORTANT]
-> Screenshot de dmpstore aqui
+<img width="673" height="517" alt="Screenshot from 2026-05-01 16-28-37" src="https://github.com/user-attachments/assets/c9698e0a-a33e-4dc5-8ade-813c811e0c02" />
 
 Con el comando `set TestSeguridad "Hola UEFI"` podemos crear una variable de entorno persistente en NVRAM llamada TestSeguridad con el valor "Hola UEFI". 
 Al ejecutar el comando `set` que muestra la lista de variables del sistema podemos visualizarla.
 
-> [!IMPORTANT]
-> Screenshot de set -v aqui
+<img width="673" height="512" alt="Screenshot from 2026-05-01 16-33-15" src="https://github.com/user-attachments/assets/8e3f74c0-1059-4f1d-b76b-124b5620c8e8" />
 
 > [!NOTE]
 > El comando `set -v` es equivalente a realizar `set`.  
@@ -129,15 +121,14 @@ El Boot Manager lee BootOrder para saber en qué orden debe buscar, y luego cons
 
 Podemos ejecutar `dmpstore` para visualizar el contenido de las variables.
 
-> [!IMPORTANT]
-> Screenshot de dmpstore aqui
+<img width="613" height="273" alt="Screenshot from 2026-05-01 17-34-47" src="https://github.com/user-attachments/assets/7990dca4-ede0-4ea8-a452-8a51cd535021" />
 
 Vemos como la variable BootOrder en Little-Endian tiene como primera opcion de boot a Boot0000, seguido de 0001, 0002 y 0003.
 
 Luego podemos ver a la derecha de cada variable Boot#### un indicio de que representan.
 
-> [!IMPORTANT]
-> Screenshot de dmpstore aqui
+<img width="672" height="379" alt="Screenshot from 2026-05-01 17-35-15" src="https://github.com/user-attachments/assets/a769a279-c946-4fbd-b208-8b7896637d30" />
+<img width="683" height="505" alt="Screenshot from 2026-05-01 17-43-14" src="https://github.com/user-attachments/assets/b817b5db-e359-4bf2-b41b-c064805ad6c1" />
 
 #### Footprinting de Memoria y Hardware
 
@@ -147,15 +138,13 @@ La UEFI no trata a la RAM como un solo bloque gigante, sino que la divide en sec
 
 Al ejecutar el comando observamos una tabla con columnas que muestran la dirección de inicio, la dirección de fin y el tipo de memoria.
 
-> [!IMPORTANT]
-> Screenshot de memmap aqui
+<img width="683" height="508" alt="Screenshot from 2026-05-01 17-47-04" src="https://github.com/user-attachments/assets/b7868ab9-6b11-4e78-8017-d03c91da0c09" />
 
 Con el comando `pci` listamos los dispositivos PCI. El bus PCI  es la "columna vertebral" del hardware de la placa madre. 
 
 Este comando lista todos los componentes físicos conectados a ella (tarjetas de video, controladores de disco SATA/NVMe, placas de red, puertos USB).
 
-> [!IMPORTANT]
-> Screenshot de pci aqui
+<img width="683" height="508" alt="Screenshot from 2026-05-01 17-50-22" src="https://github.com/user-attachments/assets/9480dc1a-12da-4b75-848a-f8bfa1a3db8d" />
 
 Aqui vemos una lista organizada por Bus, Dispositivo y Función (B/D/F). Por cada elemento vemos su Vendor ID y su Device ID.
 
@@ -164,6 +153,8 @@ Con el comando `drivers` podemos ver los controladores UEFI.
 Así como Windows tiene drivers la UEFI tiene sus propios controladores en formato DXE (Driver Execution Environment) que le enseñan al firmware cómo usar el mouse, cómo leer un disco FAT32 o cómo dibujar gráficos básicos en la pantalla.
 
 Al ejecutar el comando observamos un listado con un número de Handle, la versión del driver, el tipo y el nombre (ej. FAT File System Driver, Qemu Video Driver).
+
+<img width="683" height="508" alt="Screenshot from 2026-05-01 17-52-59" src="https://github.com/user-attachments/assets/a5b7c281-cdbe-40c2-a49f-936fba625c40" />
 
 > **Pregunta de Razonamiento:**  
 > En el mapa de memoria (memmap), existen regiones marcadas como RuntimeServicesCode.  
