@@ -327,7 +327,47 @@ En este caso, el valor 0xCC no aparece como -52 en el pseudocódigo de Ghidra po
 
 ### Ejecución en Hardware Físico (Bare Metal)
 
-...
+El objetivo fue trasladar el binario compilado a una computadora real sorteando las restricciones del Secure Boot y ejecutarlo en un entorno nativo.
+
+#### Preparación del medio de arranque (USB)
+
+Para la ejecución en hardware real, se utilizó una unidad de almacenamiento USB de 8GB. El procedimiento de preparación se realizó íntegramente desde la terminal de Visual Studio Code siguiendo estos pasos:
+
+1. **Compilación:** Se ejecutó el comando `make` dentro del directorio del proyecto para generar el archivo `aplicacion.efi`.
+2. **Formateo:** Se identificó la unidad USB como `/dev/sda1` mediante `lsblk` y se le aplicó un formato FAT32 con el comando `sudo mkfs.vfat -F 32 /dev/sda1`.
+3. **Estructura de Directorios:** Se montó la unidad en `/mnt` y se creó la ruta de directorios estándar para el arranque UEFI: `/mnt/EFI/BOOT`.
+4. **Instalación de la Shell:** Se descargó el binario de la UEFI Shell oficial y se guardó en la ruta anterior con el nombre `BOOTX64.EFI`.
+5. **Carga de la Aplicación:** Se copió el archivo `aplicacion.efi` a la raíz del pendrive y se procedió a desmontar la unidad de forma segura.
+
+![Comandos de preparación 1](./Screenshot_20260503_204250.png)
+![Comandos de preparación 2](./Screenshot_20260503_204428.png)
+
+#### Configuración del BIOS/UEFI (Lenovo IdeaPad S340)
+
+Para permitir el arranque desde un medio no firmado, se accedió a la utilidad de configuración del sistema (BIOS) de la computadora y se realizaron los siguientes ajustes:
+
+* **Security:** Se deshabilitó la opción **Secure Boot** (Secure Boot Status: Disabled).
+* **Boot:** Se configuró el **Boot Mode** en **UEFI** y se verificó que la opción **USB Boot** estuviera habilitada.
+
+![Configuración Secure Boot](./WhatsApp%20Image%202026-05-03%20at%2020.59.36%20(2).jpeg)
+![Configuración Boot Mode](./WhatsApp%20Image%202026-05-03%20at%2020.59.36%20(1).jpeg)
+
+#### Ejecución y resultados
+
+Una vez configurado el hardware, se inició el sistema presionando la tecla de función para abrir el **Boot Manager**, seleccionando el dispositivo USB detectado.
+
+![Boot Manager](./WhatsApp%20Image%202026-05-03%20at%2020.59.36.jpeg)
+
+Al iniciar, el sistema cargó la UEFI Shell. Dentro de la interfaz, se procedió de la siguiente manera:
+1. Se cambió al sistema de archivos del USB utilizando el alias `FS0:`.
+2. Se verificó la presencia de los archivos mediante el comando `ls`.
+3. Se invocó la aplicación mediante el comando `aplicacion.efi`.
+
+![Interfaz de la Shell](./WhatsApp%20Image%202026-05-03%20at%2020.59.35.jpeg)
+
+Como resultado obtenido al ejecutar el comando, se observó un comportamiento no esperado en la consola. El sistema se detuvo y el cursor quedó congelado de forma permanente debajo del comando de ejecución, sin mostrar los mensajes de texto esperados ("Iniciando analisis de seguridad...") y sin devolver el control a la terminal, requiriendo un reinicio manual del equipo.
+
+![Falla en la ejecución](./WhatsApp%20Image%202026-05-03%20at%2020.59.35%20(1).jpeg)
 
 ### Referencias
 
