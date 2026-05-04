@@ -360,6 +360,24 @@ Como resultado obtenido al ejecutar el comando, se observó un comportamiento no
 
 <img width="1600" height="1200" alt="WhatsApp Image 2026-05-03 at 20 59 35 (1)" src="https://github.com/user-attachments/assets/7d80cc7d-2e76-4ab9-8cff-0ecfd9508d9c" />
 
+Investigando encontramos que el fallo original podia deberse a una incompatibilidad en la convención de llamadas. 
+
+GCC en Linux compila usando el estándar System V AMD64 mientras que UEFI requiere el estándar Microsoft x64. 
+
+Al invocar `OutputString` directamente, el firmware buscaba los parámetros en los registros equivocados, provocando una excepción de memoria que congelaba el sistema. 
+
+El uso de la macro `uefi_call_wrapper` deberia solucionar esto actuando como traductor. Esta deberia reubicar transparentemente los argumentos desde los registros de Linux hacia los registros exigidos por UEFI antes de ejecutar la función.
+
+Procedemos a verificar esto con QEMU, donde se observo el mensaje impreso:
+
+> [!IMPORTANT]
+> imagen qemu
+
+Reejecutamos los comandos para cargar la aplicacion efi modificada en el USB y lo ejecutamos en el computador, donde conseguimos ver el mensaje impreso:
+
+> [!IMPORTANT]
+> imagen pc
+
 ### Referencias
 
 > [UEFI](https://uefi.org/specs/UEFI/2.10/index.html)
