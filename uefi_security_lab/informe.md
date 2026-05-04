@@ -174,7 +174,7 @@ Los antivirus convencionales escanean los procesos del sistema operativo y los d
 
 #### Desarrollo de Aplicación
 
-**aplicacion.c**
+_**aplicacion.c**_
 ```C
 #include <efi.h>
 #include <efilib.h>
@@ -192,32 +192,27 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
     return EFI_SUCCESS;
 }
 ```
-Minima explicación de `aplicacion.c`: 
 
-Este código es una aplicación UEFI, que corre en el entorno de firmware.
-
-Está usando las librerías de GNU-EFI:
+Este código es una aplicación UEFI que corre en el entorno de firmware, usando las librerías de GNU-EFI:
 - `efi.h`: define las estructuras base de UEFI (como EFI_STATUS, EFI_HANDLE, EFI_SYSTEM_TABLE).
 - `efilib.h`: funciones auxiliares (como InitializeLib) que simplifican el uso del entorno EFI.
 
-El punto de entrada es `efi_main()`, que es el equivalente al main() en programas normales, pero para UEFI.
-
-¿Qué se está queriendo hacer?
-
-- Muestra un mensaje inicial: *Iniciando analisis de seguridad...*
+La funcion `efi_main()` es el punto de entrada para programas UEFI. Dentro de esta se busc
+- Mostrar un mensaje inicial: *Iniciando analisis de seguridad...*
 - Define un byte con valor `0xCC`.
 - Verifica ese valor e imprime otro mensaje si coincide: *Breakpoint estatico alcanzado.*
 
 > **Pregunta de Razonamiento:**  
 > ¿Por qué utilizamos SystemTable->ConOut->OutputString en lugar de la función printf de C?
 
-Utilizamos `SystemTable->ConOut->OutputString` porque la aplicación se ejecuta en un entorno UEFI, donde no existe un sistema operativo ni la infraestructura de runtime de C.
-La función `printf` pertenece a la librería estándar de C y depende de mecanismos de entrada/salida como `stdout` y `syscalls`, que no están disponibles en este entorno.
+Utilizamos `SystemTable->ConOut->OutputString` porque la aplicación se ejecuta en un entorno UEFI, donde no existe un sistema operativo ni la infraestructura de runtime de C.  
+La función `printf` pertenece a la librería estándar de C y depende de mecanismos de entrada/salida como `stdout` y `syscalls`, que no están disponibles en este entorno.  
 En su lugar, UEFI provee sus propios protocolos de I/O, como `ConOut`, que permiten interactuar directamente con la consola del firmware.
 
 #### Compilación a Formato PE/COFF
 
-Comandos:
+Realizamos:
+
 ```bash
 # 1. Compilar a código objeto
 gcc -I/usr/include/efi -I/usr/include/efi/x86_64 -I/usr/include/efi/protocol -fpic -ffreestanding
@@ -230,10 +225,10 @@ ld -shared -Bsymbolic -L/usr/lib -L/usr/lib/efi -T /usr/lib/elf_x86_64_efi.lds
 objcopy -j .text -j .sdata -j .data -j .dynamic -j .dynsym -j .rel -j .rela -j .rel.* -j .rela.* -j .reloc
 --target=efi-app-x86_64 aplicacion.so aplicacion.efi
 ```
-**Breve descripción de los flags que intervienen:**
+
+Durante las distintas etapas de generacion del ejecutable utilizamos una diversidad de flags:
 
 **Compilación:**
-
 - Los includes `-I/..` agregan paths de los headers de GNU-EFI
 - `-ffreestanding` indica que no hay OS
 - `-fpic` genera código compatible con firmware (**Position Independent Code**),necesario porque UEFI puede cargar la imagen en distintas direcciones.
@@ -258,7 +253,6 @@ objcopy -j .text -j .sdata -j .data -j .dynamic -j .dynsym -j .rel -j .rela -j .
 - `-lgnuefi` Librería de utilidades de GNU-EFI. ( **InitializeLib()** )
 
 **Conversión a formato EFI**
-
 - `objcopy` convierte el binario ELF (.so) a formato PE/COFF (.efi)
 - `-j <sección>` incluye únicamente las secciones especificadas en el binario final
 - `--target=efi-app-x86_64` define el formato de salida como aplicación EFI de 64 bits (PE/COFF)
@@ -287,11 +281,9 @@ Al ejecutar `file aplicacion.efi` podemos ver el tipo de archivo:
 
 <img width="806" height="77" alt="file_aplicacion efi" src="https://github.com/user-attachments/assets/5c0ccdd6-e5ab-4572-9971-ff3375f0a735" />
 
-
 Al ejecutar `readelf -h aplicacion.efi` vemos que genera un error:
 
 <img width="806" height="77" alt="readelf" src="https://github.com/user-attachments/assets/908cb63a-87a8-4f49-a289-0cb93f0538b2" />
-
 
 Esto se debe a que el comando `readelf -h` intenta leer el header como si `aplicacion.efi` fuese un archivo ELF, por lo tanto el error es correcto, ya que el formato que le desiganmos al archivo en el paso anterior es de `PE/COFF`
 
@@ -301,8 +293,7 @@ Luego de ejecutar `ghidra` necesitamos generar un proyecto e importar el archivo
 
 <img width="1318" height="736" alt="ghidra" src="https://github.com/user-attachments/assets/00667046-fcc8-4a54-b29c-44c7f82a9d29" />
 
-
-
+   
 > **Pregunta de Razonamiento:**  
 > En el pseudocódigo de Ghidra, la condición 0xCC suele aparecer como -52. ¿A qué se debe este fenómeno y por qué importa en ciberseguridad?
 
@@ -339,8 +330,8 @@ Para la ejecución en hardware real, se utilizó una unidad de almacenamiento US
 4. **Instalación de la Shell:** Se descargó el binario de la UEFI Shell oficial y se guardó en la ruta anterior con el nombre `BOOTX64.EFI`.
 5. **Carga de la Aplicación:** Se copió el archivo `aplicacion.efi` a la raíz del pendrive y se procedió a desmontar la unidad de forma segura.
 
-![Comandos de preparación 1](./Screenshot_20260503_204250.png)
-![Comandos de preparación 2](./Screenshot_20260503_204428.png)
+<img width="1366" height="768" alt="Screenshot_20260503_204250" src="https://github.com/user-attachments/assets/85b8d14d-2af1-47b5-b09d-0366df1603e2" />
+<img width="1366" height="768" alt="Screenshot_20260503_204428" src="https://github.com/user-attachments/assets/63353e1e-437e-4d82-a9f4-96aa7c0aafdc" />
 
 #### Configuración del BIOS/UEFI (Lenovo IdeaPad S340)
 
@@ -349,25 +340,25 @@ Para permitir el arranque desde un medio no firmado, se accedió a la utilidad d
 * **Security:** Se deshabilitó la opción **Secure Boot** (Secure Boot Status: Disabled).
 * **Boot:** Se configuró el **Boot Mode** en **UEFI** y se verificó que la opción **USB Boot** estuviera habilitada.
 
-![Configuración Secure Boot](./WhatsApp%20Image%202026-05-03%20at%2020.59.36%20(2).jpeg)
-![Configuración Boot Mode](./WhatsApp%20Image%202026-05-03%20at%2020.59.36%20(1).jpeg)
+<img width="1600" height="1200" alt="WhatsApp Image 2026-05-03 at 20 59 36 (2)" src="https://github.com/user-attachments/assets/ca3407c7-d595-4453-99c0-f12db939d649" />
+<img width="1600" height="1200" alt="WhatsApp Image 2026-05-03 at 20 59 36 (1)" src="https://github.com/user-attachments/assets/b123d3a5-42d2-4223-9272-99e174f3816b" />
 
 #### Ejecución y resultados
 
 Una vez configurado el hardware, se inició el sistema presionando la tecla de función para abrir el **Boot Manager**, seleccionando el dispositivo USB detectado.
 
-![Boot Manager](./WhatsApp%20Image%202026-05-03%20at%2020.59.36.jpeg)
+<img width="1600" height="1200" alt="WhatsApp Image 2026-05-03 at 20 59 36" src="https://github.com/user-attachments/assets/705ce9e7-28e5-4f53-9cd9-83a0ee4e0451" />
 
 Al iniciar, el sistema cargó la UEFI Shell. Dentro de la interfaz, se procedió de la siguiente manera:
 1. Se cambió al sistema de archivos del USB utilizando el alias `FS0:`.
 2. Se verificó la presencia de los archivos mediante el comando `ls`.
 3. Se invocó la aplicación mediante el comando `aplicacion.efi`.
 
-![Interfaz de la Shell](./WhatsApp%20Image%202026-05-03%20at%2020.59.35.jpeg)
+<img width="1600" height="1200" alt="WhatsApp Image 2026-05-03 at 20 59 35" src="https://github.com/user-attachments/assets/e823dc50-b3a1-4c62-901f-adf8499c03ff" />
 
 Como resultado obtenido al ejecutar el comando, se observó un comportamiento no esperado en la consola. El sistema se detuvo y el cursor quedó congelado de forma permanente debajo del comando de ejecución, sin mostrar los mensajes de texto esperados ("Iniciando analisis de seguridad...") y sin devolver el control a la terminal, requiriendo un reinicio manual del equipo.
 
-![Falla en la ejecución](./WhatsApp%20Image%202026-05-03%20at%2020.59.35%20(1).jpeg)
+<img width="1600" height="1200" alt="WhatsApp Image 2026-05-03 at 20 59 35 (1)" src="https://github.com/user-attachments/assets/7d80cc7d-2e76-4ab9-8cff-0ecfd9508d9c" />
 
 ### Referencias
 
