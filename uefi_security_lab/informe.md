@@ -370,13 +370,11 @@ El uso de la macro `uefi_call_wrapper` deberia solucionar esto actuando como tra
 
 Procedemos a verificar esto con QEMU, donde se observo el mensaje impreso:
 
-> [!IMPORTANT]
-> imagen qemu
+<img width="692" height="530" alt="Screenshot from 2026-05-03 23-55-47" src="https://github.com/user-attachments/assets/517ef4c0-0434-40d8-950b-658c87188c38" />
 
 Reejecutamos los comandos para cargar la aplicacion efi modificada en el USB y lo ejecutamos en el computador, donde conseguimos ver el mensaje impreso:
 
-> [!IMPORTANT]
-> imagen pc
+<img width="1280" height="720" alt="WhatsApp Image 2026-05-04 at 00 11 15" src="https://github.com/user-attachments/assets/3b987ab0-5aea-4e71-abae-530e08a17c4e" />
 
 ### Referencias
 
