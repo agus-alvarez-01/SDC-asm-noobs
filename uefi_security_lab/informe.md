@@ -354,11 +354,9 @@ Al iniciar, el sistema cargó la UEFI Shell. Dentro de la interfaz, se procedió
 2. Se verificó la presencia de los archivos mediante el comando `ls`.
 3. Se invocó la aplicación mediante el comando `aplicacion.efi`.
 
-<img width="1600" height="1200" alt="WhatsApp Image 2026-05-03 at 20 59 35" src="https://github.com/user-attachments/assets/e823dc50-b3a1-4c62-901f-adf8499c03ff" />
-
 Como resultado obtenido al ejecutar el comando, se observó un comportamiento no esperado en la consola. El sistema se detuvo y el cursor quedó congelado de forma permanente debajo del comando de ejecución, sin mostrar los mensajes de texto esperados ("Iniciando analisis de seguridad...") y sin devolver el control a la terminal, requiriendo un reinicio manual del equipo.
 
-<img width="1600" height="1200" alt="WhatsApp Image 2026-05-03 at 20 59 35 (1)" src="https://github.com/user-attachments/assets/7d80cc7d-2e76-4ab9-8cff-0ecfd9508d9c" />
+<img width="1600" height="1200" alt="WhatsApp Image 2026-05-03 at 20 59 35" src="https://github.com/user-attachments/assets/e823dc50-b3a1-4c62-901f-adf8499c03ff" />
 
 Investigando encontramos que el fallo original podia deberse a una incompatibilidad en la convención de llamadas. 
 
