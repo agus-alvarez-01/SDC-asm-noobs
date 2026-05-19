@@ -120,70 +120,127 @@ Asi por ejemplo tenemos:
 
 ### Modulos
 
-que hace esto?
+#### Compilado e Instalado
 
-```bash
-cd part1
-make
-sudo insmod mimodulo.ko
-sudo dmesg
-lsmod | grep mod
-```
+Dentro del directorio `part1` colocamos el Makefile y el archivo `mimodulo.c` provistos para la experiencia.
 
-describir resultado y poner imagen de ejecucion
+Con estos podemos compilar el modulo utilizando `make`, lo que nos entrega el archivo `mimodulo.ko`.
 
-que hace esto?
+foto
 
-```bash
-sudo rmmod mimodulo
-sudo dmsg
-lsmod | grep mod
-cat /proc/modules  | grep mod
-```
+Luego insertamos el modulo dentro del kernel ejecutando `sudo insmod mimodulo.ko`.
 
-describir resultado y poner imagen de ejecucion
+foto
 
-que hace esto?
+Finalmente con `sudo dmesg` mostramos el log del kernel donde vemos la carga del modulo en el kernel:
 
-```bash
-modinfo mimodulo.ko 
-modinfo /lib/modules/$(uname -r)/kernel/crypto/des_generic.ko
-```
+foto
 
-describir resultado y poner imagen de ejecucion
+Observamos como nos informa que el modulo no pertenece al kernel oficial, no esta firmado, y que "manchamos" el kernel incluyendolo.
+
+Finalmente con `lsmod | grep mod` buscamos el modulo en la lista de modulos cargados:
+
+foto
+
+Aqui vemos el nombre del modulo, el tamaño en memoria, y la cantidad de modulos que lo usan.
+ 
+Para quitarlo podemos ejecutar `sudo rmmod mimodulo` y vemos el resultado nuevamente en los logs:
+
+fotos
+
+Y vemos como ya no esta cargado:
+
+fotos
+
+#### Informacion del Modulo
+
+Con `modinfo mimodulo.ko` podemos ver los metadatos del modulo:
+
+foto
+
+`vermagic` nos indica versión del kernel, arquitectura y opciones de compilación compatibles.
+
+Esto lo podemos contrastar con la informacion de un modulo real de kernel usando `modinfo /lib/modules/$(uname -r)/kernel/crypto/des_generic.ko`
+
+foto
+
+Vemos que la informacion es mucho mas completa que nuestro modulo casero, y particularmente vemos intree Y en el oficial, y N en el nuestro que diferencia justamente eso de pertenecer al kerner oficial.
+
+#### Preguntas
 
 > ¿Qué diferencias se pueden observar entre los dos modinfo ? 
 
-...
+| Característica | Módulo propio           | Módulo oficial del kernel       |
+| -------------- | ----------------------- | ------------------------------- |
+| `filename`     | ruta local              | ruta dentro del kernel          |
+| `intree`       | `N` o ausente           | `Y`                             |
+| Firma digital  | generalmente no firmado | firmado                         |
+| Autor          | alumno                  | desarrolladores kernel          |
+| Licencia       | definida manualmente    | oficial                         |
+| Dependencias   | normalmente ninguna     | puede depender de otros módulos |
+| Taint          | puede taint el kernel   | normalmente no                  |
+| Compatibilidad | compilado localmente    | validado oficialmente           |
 
 > ¿Qué divers/modulos estan cargados en sus propias pc?  
-> Comparar las salidas con las computadoras de cada integrante del grupo.  
-> Expliquen las diferencias.  
+
+Podemos utilizar lmod para ver los modulos que tenemos en nuestras PCs:
+
+foto
+
+> Comparar las salidas con las computadoras de cada integrante del grupo. Expliquen las diferencias.
+
+TODO
+
 > Carguen un txt con la salida de cada integrante en el repo y pongan un diff en el informe.
 
-...
+WIP
 
-> ¿Cuales no están cargados pero están disponibles?  
+> ¿Cuales no están cargados pero están disponibles?
+
+Podemos usar `find /lib/modules/$(uname -r) -name "*.ko" | head` para encontrarlos:
+
+foto
+
 > Que pasa cuando el driver de un dispositivo no está disponible. 
 
-...
+Si el driver de un dispositivo no esta disponible el sistema operativo no puede controlar el hardware.
+
+El dispositivo puede no funcionar, funcionar parcialmente o usar drivers genéricos.
 
 > Correr hwinfo en una pc real con hw real y agregar la url de la información de hw en el reporte. 
 
-...
+Agregados bajo la nomenclatura `<miembro>_hwinfo.txt`.
 
 > ¿Qué diferencia existe entre un módulo y un programa?
 
-...
+| Programa               | Módulo                   |
+| ---------------------- | ------------------------ |
+| corre en user space    | corre en kernel space    |
+| permisos restringidos  | privilegios totales      |
+| usa syscalls           | accede directo al kernel |
+| falla aislada          | puede colgar el sistema  |
+| `.out`, ELF ejecutable | `.ko`                    |
 
 > ¿Cómo puede ver una lista de las llamadas al sistema que realiza un simple helloworld en c?
 
-...
+Podemos ejecutar la herramienta `strace`:
+
+foto
+
+Este intercepta las llamadas al sistema y la interacción con el kernel.
 
 > ¿Qué es un segmentation fault?
 > ¿Cómo lo maneja el kernel y como lo hace un programa?
 
-...
+Un segmentation fault ocurre cuando un programa accede memoria inválida, usa punteros incorrectos o escribe fuera de límites.
+
+El kernel lo maneja detectando el acceso inválido, enviando una señal SIGSEGV y terminando el proceso.
+
+Un programa puede manejarlo capturando señales, generando core dumps o usando handlers, e.g:
+
+```C
+signal(SIGSEGV, handler);
+```
 
 > Intentar firmar un módulo de kernel y documentar el proceso?
 
