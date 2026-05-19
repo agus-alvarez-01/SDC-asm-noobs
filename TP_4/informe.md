@@ -33,11 +33,11 @@ Para esto generamos un programa en c `hello.c`, el cual compilamos con gcc y lue
 
 Ejecutamos el mismo con `sudo checkinstall` y generamos el paquete: 
 
-imagen
+<img width="947" height="1354" alt="Screenshot from 2026-05-18 23-25-03" src="https://github.com/user-attachments/assets/ee66ae6c-d8ef-4a8a-8c65-81677d1591ff" />
 
 Luego instalamos el paquete con `dpkg` y lo ejecutamos:
 
-imagen
+<img width="759" height="138" alt="Screenshot from 2026-05-18 23-25-45" src="https://github.com/user-attachments/assets/5a98d893-d4ad-4cee-a4df-9e804546348d" />
 
 > Revisar la bibliografía para impulsar acciones que permitan mejorar la seguridad del kernel.
 > Concretamente: evitando cargar módulos que no estén firmados.
@@ -126,43 +126,45 @@ Dentro del directorio `part1` colocamos el Makefile y el archivo `mimodulo.c` pr
 
 Con estos podemos compilar el modulo utilizando `make`, lo que nos entrega el archivo `mimodulo.ko`.
 
-foto
+<img width="1165" height="336" alt="Screenshot from 2026-05-19 01-16-34" src="https://github.com/user-attachments/assets/c255aa22-740d-43fc-8c57-344f1c3ba47c" />
 
 Luego insertamos el modulo dentro del kernel ejecutando `sudo insmod mimodulo.ko`.
 
-foto
+<img width="685" height="42" alt="Screenshot from 2026-05-19 01-17-02" src="https://github.com/user-attachments/assets/f9570caf-eb2d-4d6e-993f-5969c6dee890" />
 
 Finalmente con `sudo dmesg` mostramos el log del kernel donde vemos la carga del modulo en el kernel:
 
-foto
+<img width="874" height="54" alt="Screenshot from 2026-05-19 01-19-39" src="https://github.com/user-attachments/assets/18727d58-008f-4d34-9eb2-b1228f12e0d0" />
 
 Observamos como nos informa que el modulo no pertenece al kernel oficial, no esta firmado, y que "manchamos" el kernel incluyendolo.
 
 Finalmente con `lsmod | grep mod` buscamos el modulo en la lista de modulos cargados:
 
-foto
+<img width="634" height="116" alt="Screenshot from 2026-05-19 01-21-58" src="https://github.com/user-attachments/assets/13b88b49-ee11-42d2-91d5-3a150d76b93b" />
 
 Aqui vemos el nombre del modulo, el tamaño en memoria, y la cantidad de modulos que lo usan.
  
 Para quitarlo podemos ejecutar `sudo rmmod mimodulo` y vemos el resultado nuevamente en los logs:
 
-fotos
+<img width="653" height="44" alt="Screenshot from 2026-05-19 01-24-14" src="https://github.com/user-attachments/assets/9af5b158-5be7-41b6-8aec-b21c219fedc3" />
+<img width="876" height="68" alt="Screenshot from 2026-05-19 01-24-56" src="https://github.com/user-attachments/assets/9d567035-34f1-4c1f-874f-dbf78d89337a" />
 
 Y vemos como ya no esta cargado:
 
-fotos
+<img width="625" height="103" alt="Screenshot from 2026-05-19 01-25-51" src="https://github.com/user-attachments/assets/ed010e4b-158b-45c8-95e5-59ade8978fd8" />
+<img width="716" height="103" alt="Screenshot from 2026-05-19 01-27-05" src="https://github.com/user-attachments/assets/eaf23bb7-f94f-4635-8ef9-168763473475" />
 
 #### Informacion del Modulo
 
 Con `modinfo mimodulo.ko` podemos ver los metadatos del modulo:
 
-foto
+<img width="647" height="202" alt="Screenshot from 2026-05-19 01-29-10" src="https://github.com/user-attachments/assets/cc7a5cf9-8e17-440a-be7b-01294517a135" />
 
 `vermagic` nos indica versión del kernel, arquitectura y opciones de compilación compatibles.
 
 Esto lo podemos contrastar con la informacion de un modulo real de kernel usando `modinfo /lib/modules/$(uname -r)/kernel/crypto/des_generic.ko`
 
-foto
+<img width="980" height="861" alt="Screenshot from 2026-05-19 01-35-52" src="https://github.com/user-attachments/assets/aae971b9-b719-4f8a-9e82-39b5a55aaead" />
 
 Vemos que la informacion es mucho mas completa que nuestro modulo casero, y particularmente vemos intree Y en el oficial, y N en el nuestro que diferencia justamente eso de pertenecer al kerner oficial.
 
@@ -185,7 +187,7 @@ Vemos que la informacion es mucho mas completa que nuestro modulo casero, y part
 
 Podemos utilizar lmod para ver los modulos que tenemos en nuestras PCs:
 
-foto
+<img width="1003" height="911" alt="Screenshot from 2026-05-19 01-39-36" src="https://github.com/user-attachments/assets/a43dbb80-cab3-46be-ac3c-b601aff2a2ee" />
 
 > Comparar las salidas con las computadoras de cada integrante del grupo. Expliquen las diferencias.
 
@@ -199,7 +201,7 @@ WIP
 
 Podemos usar `find /lib/modules/$(uname -r) -name "*.ko" | head` para encontrarlos:
 
-foto
+<img width="883" height="196" alt="Screenshot from 2026-05-19 01-45-04" src="https://github.com/user-attachments/assets/1a531797-e2c3-4095-893b-eb5f120407ed" />
 
 > Que pasa cuando el driver de un dispositivo no está disponible. 
 
@@ -225,7 +227,7 @@ Agregados bajo la nomenclatura `<miembro>_hwinfo.txt`.
 
 Podemos ejecutar la herramienta `strace`:
 
-foto
+<img width="943" height="722" alt="Screenshot from 2026-05-19 01-52-54" src="https://github.com/user-attachments/assets/f7ddb6ff-b242-421f-9ecf-f9fdc20a6332" />
 
 Este intercepta las llamadas al sistema y la interacción con el kernel.
 
