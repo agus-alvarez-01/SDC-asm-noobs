@@ -13,20 +13,53 @@
 
 > ¿Qué es checkinstall y para qué sirve?
 
-...
+Es una herramienta para GNU/Linux que permite instalar software compilado desde código fuente y al mismo tiempo generar un paquete instalable del sistema.
+
+Normalmente, cuando se compila un programa manualmente se usa:
+
+```bash
+./configure
+make
+sudo make install
+```
+
+El problema es que `make install` copia archivos al sistema sin que el gestor de paquetes los controle. Luego resulta difícil desinstalar o auditar qué se instaló.
+
+Checkinstall reemplaza `sudo make install` por `sudo checkinstall` y automáticamente registra los archivos instalados, crea un paquete instalable, permite desinstalarlo fácilmente, mantiene el sistema más ordenado y seguro.
 
 > Usarlo para empaquetar un hello world
 
-...
+Para esto generamos un programa en c `hello.c`, el cual compilamos con gcc y luego generamos un makefile parausar con checkinstall.
+
+Ejecutamos el mismo con `sudo checkinstall` y generamos el paquete: 
+
+imagen
+
+Luego instalamos el paquete con `dpkg` y lo ejecutamos:
+
+imagen
 
 > Revisar la bibliografía para impulsar acciones que permitan mejorar la seguridad del kernel.
 > Concretamente: evitando cargar módulos que no estén firmados.
 
-... 
+Un módulo firmado posee una firma criptográfica verificada por el kernel antes de cargarse. Si la firma no es válida el módulo se rechaza y no puede ejecutarse dentro del kernel.
+
+Si el sistema permite cargar cualquier módulo, un atacante con privilegios puede insertar código malicioso directamente en el kernel.
+
+Para evitar estos modulos no firmados podemos realizar diversas acciones:
+
+1. Activar “Module Signature Verification”: Esto obliga al kernel a aceptar únicamente módulos firmados.
+2. Usar Secure Boot: permite que el firmware valide el bootloader, el bootloader valide el kernel y el kernel valide módulos.
+3. Deshabilitar carga dinámica de módulos: no se pueden cargar más módulos, incluso siendo root.
+4. Restringir herramientas peligrosas: como `insmod`, `modprobe` y `rmmod` solo a administradores confiables.
 
 > ¿ Que son rootkits? 
 
-...
+Un rootkit es software malicioso diseñado para ocultarse, obtener privilegios elevados y modificar el comportamiento del sistema.
+
+Los rootkits de kernel son especialmente peligrosos porque operan con privilegios máximos.
+
+Entre las cosas que pueden realizar encontramos que pueden interceptar syscalls, ocultar procesos, ocultar archivos, ocultar conexiones de red y alterar logs.
 
 ### Desafio #2
 
