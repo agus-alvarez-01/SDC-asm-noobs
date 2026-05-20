@@ -283,30 +283,34 @@ Luego, hay que reiniciar la computadora, y aparecerá la pantalla de MOK Manager
 Pantalla MOK:
 -> seleccionar Enroll MOK
 
-----------Enroll-MOK
+<img width="1600" height="900" alt="Enroll-MOK" src="https://github.com/user-attachments/assets/4af4c76d-60fd-439e-935b-a7b273be0bb6" />
+
 -> View key 0
 
 Permite ver el certificado que está a punto de registrar en MOK. 
 
-----------view-key 1y2
+<img width="1600" height="900" alt="View-key-1" src="https://github.com/user-attachments/assets/ffd20bbd-d40a-4892-bde3-14fd0d0cb7f3" />
+<img width="1600" height="900" alt="View-key-2" src="https://github.com/user-attachments/assets/588c0694-8053-4b86-a4c7-6fb9463e789d" />
+
 
 -> Continue
 
-Confirmar el enroll
+Confirmar Enroll
 
 -> Yes
 
-----------foto-confirmacion enroll
+<img width="1600" height="900" alt="Confirmacion-de-Enrolar-firma" src="https://github.com/user-attachments/assets/d7edd8a4-7bc0-4f19-b28e-d197aaa0eae6" />
+
 
 Colocar clave temporal, generada anteriormente.
 
 -> Password
 
-----------foto clave temporal
+<img width="1600" height="900" alt="clave-temporal" src="https://github.com/user-attachments/assets/5774ecc4-5882-40b5-bcf8-a94a079c14dd" />
 
 -> Reboot
 
-----------foto-fin-reboot
+<img width="1600" height="900" alt="fin-reboot" src="https://github.com/user-attachments/assets/3dd45ee4-cd09-4473-b159-f1b900d435b2" />
 
 #### Paso 4:
 Firmar el módulo, el script de firma viene con el kernel:
@@ -325,19 +329,20 @@ Verificar la firma
 ```bash
 modinfo mimodulo.ko | grep -E 'signer|sig_key|sig_hashalgo'
 ```
-----------foto firma y comprobacion
+
+<img width="1232" height="264" alt="firma-y-comprobacion" src="https://github.com/user-attachments/assets/4e65559f-cf09-46ba-8c70-cfe3facd27e1" />
+
 #### Paso 5:
 Luego hay que cargar la versión firmada:
 ```bash
 sudo insmod mimodulo.ko
 ```
 
-----------foto-modulo-cargado
+<img width="1232" height="87" alt="modulo-cargado" src="https://github.com/user-attachments/assets/ce75ff4e-e32e-4d2e-8200-a2cbe7d6e574" />
 
 > [!NOTE]
 > Para poder realizar el proceso, el secure boot debe estar activo. Se puede comprobar con `mokutil --sb-state`, y Platform Mode en User Mode, no en Setup Mode.
 
-...
 
 > Agregar evidencia de la compilación, carga y descarga de su propio módulo imprimiendo el nombre del equipo en los registros del kernel. 
 
@@ -352,9 +357,9 @@ sudo rmmod mimodulo.ko
 sudo insmod mimodulo.ko
 sudo dmesg
 ```
-FOTO FIRMA_ASM_NOOBS
 
-...
+<img width="1232" height="87" alt="firma-asm_noobs" src="https://github.com/user-attachments/assets/6e1ba2b5-cfb8-4790-a37c-98e1525f9809" />
+
 
 > ¿Que pasa si mi compañero con secure boot habilitado intenta cargar un módulo firmado por mi? 
 
