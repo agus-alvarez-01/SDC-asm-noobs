@@ -246,15 +246,122 @@ signal(SIGSEGV, handler);
 
 > Intentar firmar un módulo de kernel y documentar el proceso?
 
+#### Paso 1:
+Primero debemos generar certificados para firmar módulos:
+```bash
+mkdir ~/module-signing
+cd ~/module-signing
+openssl req -new -x509 -newkey rsa:2048 \
+    -keyout MOK.priv \
+    -outform DER \
+    -out MOK.der \
+    -nodes \
+    -days 36500 \
+    -subj "/CN=asm_noobs Module Signing Key/"
+```
+- `-new` genera un nuevo certificado. 
+- `-x509` crea directamente un certificado X.509 autofirmado.
+- `-newkey rsa:2048` genera una nueva clave RSA de 2048 bits. 
+- `-days` indica la canditidad de dias validos.
+- `-subj` define el Common Name del certificado
+
+Archivos generados en la carpeta module-signing:
+
+- `MOK.priv`: clave privada
+- `MOK.der`: certificado público
+
+#### Paso 2:
+> Registrar la clave en MOK (Machine Owner Key)
+```bash
+sudo mokutil --import ~/module-signing/MOK.der
+```
+Esto pide una contraseña temporal.
+
+#### Paso 3:
+Luego, hay que reiniciar la computadora, y aparecerá la pantalla de MOK Manager, donde se va a registrar el certificado generado.
+
+Pantalla MOK:
+-> seleccionar Enroll MOK
+
+----------Enroll-MOK
+-> View key 0
+
+Permite ver el certificado que está a punto de registrar en MOK. 
+
+----------view-key 1y2
+
+-> Continue
+
+Confirmar el enroll
+
+-> Yes
+
+----------foto-confirmacion enroll
+
+Colocar clave temporal, generada anteriormente.
+
+-> Password
+
+----------foto clave temporal
+
+-> Reboot
+
+----------foto-fin-reboot
+
+#### Paso 4:
+Firmar el módulo, el script de firma viene con el kernel:
+
+> Ejecutar estando en la carpeta donde está mimodulo.ko
+
+```bash
+/usr/src/linux-headers-$(uname -r)/scripts/sign-file \
+sha256 \
+~/module-signing/MOK.priv \
+~/module-signing/MOK.der \
+mimodulo.ko
+```
+Verificar la firma
+
+```bash
+modinfo mimodulo.ko | grep -E 'signer|sig_key|sig_hashalgo'
+```
+----------foto firma y comprobacion
+#### Paso 5:
+Luego hay que cargar la versión firmada:
+```bash
+sudo insmod mimodulo.ko
+```
+
+----------foto-modulo-cargado
+
+> [!NOTE]
+> Para poder realizar el proceso, el secure boot debe estar activo. Se puede comprobar con `mokutil --sb-state`, y Platform Mode en User Mode, no en Setup Mode.
+
 ...
 
 > Agregar evidencia de la compilación, carga y descarga de su propio módulo imprimiendo el nombre del equipo en los registros del kernel. 
+
+Para imprimir el nombre de nuestro equipo en los registros del kernel, modificamos la linea del `printk()` en `mimodulo.c`
+```C
+printk(KERN_INFO "Modulo cargado en el kernel, por asm_noobs :).\n");
+```
+Compilamos nuevamente con `make`, y firmamos nuevamente **(Paso 4)**.
+Hay que descargar el modulo anterior, cargar el nuevo y verficar:
+```bash
+sudo rmmod mimodulo.ko
+sudo insmod mimodulo.ko
+sudo dmesg
+```
+FOTO FIRMA_ASM_NOOBS
 
 ...
 
 > ¿Que pasa si mi compañero con secure boot habilitado intenta cargar un módulo firmado por mi? 
 
+Un módulo firmado por otro usuario no puede cargarse en un sistema con Secure Boot habilitado salvo que la clave pública correspondiente haya sido previamente registrada en la base de confianza MOK del sistema.
+
 ...
+
 
 > Dada la siguiente [nota](https://arstechnica.com/security/2024/08/a-patch-microsoft-spent-2-years-preparing-is-making-a-mess-for-some-linux-users/)  
 > ¿Cuál fue la consecuencia principal del parche de Microsoft sobre GRUB en sistemas con arranque dual (Linux y Windows)?
