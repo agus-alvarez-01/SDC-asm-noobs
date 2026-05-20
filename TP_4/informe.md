@@ -191,7 +191,11 @@ Podemos utilizar lmod para ver los modulos que tenemos en nuestras PCs:
 
 > Comparar las salidas con las computadoras de cada integrante del grupo. Expliquen las diferencias.
 
-TODO
+Al comparar los módulos cargados (`lsmod`) en nuestros equipos, se evidencian diferencias claras asociadas a la marca de cada notebook y sus componentes de hardware específicos. Por nombrar algunas diferencias tenemos como ejemplo:
+
+* **Fabricante del Equipo (Vendor-Specific):** Cada sistema carga controladores exclusivos de su marca para gestionar la energía, sensores y teclas especiales. el equipo del archivo `jmc` (Juan Manuel Cáceres) carga `ideapad_laptop` y `lenovo_ymc` (Lenovo); el de `aa` (Agustín Álvarez) carga `asus_wmi` y `asus_nb_wmi` (ASUS); y el de `fnh` (Fabián Nicolás Hidalgo) utiliza `hp_wmi` (HP).
+* **Tarjetas de Red Inalámbrica:** Los tres equipos utilizan hardware de Wi-Fi de distintos fabricantes, lo que obliga al kernel a cargar pilas de controladores totalmente diferentes. `jmc` posee una placa Atheros (`ath10k_pci`), `aa` tiene una placa Intel (`iwlwifi`), y `fnh` cuenta con una tarjeta Realtek (`rtw89_8852be`).
+* **Procesamiento Gráfico:** Mientras que los equipos de `jmc` y `fnh` operan exclusivamente con los gráficos integrados de Intel (evidenciado por el módulo `i915`), el equipo de `aa` carga adicionalmente el módulo `nouveau`, indicando la presencia y gestión de una tarjeta gráfica NVIDIA de código abierto.
 
 > Carguen un txt con la salida de cada integrante en el repo y pongan un diff en el informe.
 
