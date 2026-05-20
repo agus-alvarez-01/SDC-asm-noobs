@@ -246,15 +246,127 @@ signal(SIGSEGV, handler);
 
 > Intentar firmar un módulo de kernel y documentar el proceso?
 
-...
+#### Paso 1:
+Primero debemos generar certificados para firmar módulos:
+```bash
+mkdir ~/module-signing
+cd ~/module-signing
+openssl req -new -x509 -newkey rsa:2048 \
+    -keyout MOK.priv \
+    -outform DER \
+    -out MOK.der \
+    -nodes \
+    -days 36500 \
+    -subj "/CN=asm_noobs Module Signing Key/"
+```
+- `-new` genera un nuevo certificado. 
+- `-x509` crea directamente un certificado X.509 autofirmado.
+- `-newkey rsa:2048` genera una nueva clave RSA de 2048 bits. 
+- `-days` indica la canditidad de dias validos.
+- `-subj` define el Common Name del certificado
+
+Archivos generados en la carpeta module-signing:
+
+- `MOK.priv`: clave privada
+- `MOK.der`: certificado público
+
+#### Paso 2:
+> Registrar la clave en MOK (Machine Owner Key)
+```bash
+sudo mokutil --import ~/module-signing/MOK.der
+```
+Esto pide una contraseña temporal.
+
+#### Paso 3:
+Luego, hay que reiniciar la computadora, y aparecerá la pantalla de MOK Manager, donde se va a registrar el certificado generado.
+
+Pantalla MOK:
+-> seleccionar Enroll MOK
+
+<img width="1600" height="900" alt="Enroll-MOK" src="https://github.com/user-attachments/assets/4af4c76d-60fd-439e-935b-a7b273be0bb6" />
+
+-> View key 0
+
+Permite ver el certificado que está a punto de registrar en MOK. 
+
+<img width="1600" height="900" alt="View-key-1" src="https://github.com/user-attachments/assets/ffd20bbd-d40a-4892-bde3-14fd0d0cb7f3" />
+<img width="1600" height="900" alt="View-key-2" src="https://github.com/user-attachments/assets/588c0694-8053-4b86-a4c7-6fb9463e789d" />
+
+
+-> Continue
+
+Confirmar Enroll
+
+-> Yes
+
+<img width="1600" height="900" alt="Confirmacion-de-Enrolar-firma" src="https://github.com/user-attachments/assets/d7edd8a4-7bc0-4f19-b28e-d197aaa0eae6" />
+
+
+Colocar clave temporal, generada anteriormente.
+
+-> Password
+
+<img width="1600" height="900" alt="clave-temporal" src="https://github.com/user-attachments/assets/5774ecc4-5882-40b5-bcf8-a94a079c14dd" />
+
+-> Reboot
+
+<img width="1600" height="900" alt="fin-reboot" src="https://github.com/user-attachments/assets/3dd45ee4-cd09-4473-b159-f1b900d435b2" />
+
+#### Paso 4:
+Firmar el módulo, el script de firma viene con el kernel:
+
+> Ejecutar estando en la carpeta donde está mimodulo.ko
+
+```bash
+/usr/src/linux-headers-$(uname -r)/scripts/sign-file \
+sha256 \
+~/module-signing/MOK.priv \
+~/module-signing/MOK.der \
+mimodulo.ko
+```
+Verificar la firma
+
+```bash
+modinfo mimodulo.ko | grep -E 'signer|sig_key|sig_hashalgo'
+```
+
+<img width="1232" height="264" alt="firma-y-comprobacion" src="https://github.com/user-attachments/assets/4e65559f-cf09-46ba-8c70-cfe3facd27e1" />
+
+#### Paso 5:
+Luego hay que cargar la versión firmada:
+```bash
+sudo insmod mimodulo.ko
+```
+
+<img width="1232" height="87" alt="modulo-cargado" src="https://github.com/user-attachments/assets/ce75ff4e-e32e-4d2e-8200-a2cbe7d6e574" />
+
+> [!NOTE]
+> Para poder realizar el proceso, el secure boot debe estar activo. Se puede comprobar con `mokutil --sb-state`, y Platform Mode en User Mode, no en Setup Mode.
+
 
 > Agregar evidencia de la compilación, carga y descarga de su propio módulo imprimiendo el nombre del equipo en los registros del kernel. 
 
-...
+Para imprimir el nombre de nuestro equipo en los registros del kernel, modificamos la linea del `printk()` en `mimodulo.c`
+```C
+printk(KERN_INFO "Modulo cargado en el kernel, por asm_noobs :).\n");
+```
+Compilamos nuevamente con `make`, y firmamos nuevamente **(Paso 4)**.
+Hay que descargar el modulo anterior, cargar el nuevo y verficar:
+```bash
+sudo rmmod mimodulo.ko
+sudo insmod mimodulo.ko
+sudo dmesg
+```
+
+<img width="1232" height="87" alt="firma-asm_noobs" src="https://github.com/user-attachments/assets/6e1ba2b5-cfb8-4790-a37c-98e1525f9809" />
+
 
 > ¿Que pasa si mi compañero con secure boot habilitado intenta cargar un módulo firmado por mi? 
 
+Un módulo firmado por otro usuario no puede cargarse en un sistema con Secure Boot habilitado salvo que la clave pública correspondiente haya sido previamente registrada en la base de confianza MOK del sistema.
+
 ...
+
 
 > Dada la siguiente [nota](https://arstechnica.com/security/2024/08/a-patch-microsoft-spent-2-years-preparing-is-making-a-mess-for-some-linux-users/)  
 > ¿Cuál fue la consecuencia principal del parche de Microsoft sobre GRUB en sistemas con arranque dual (Linux y Windows)?
