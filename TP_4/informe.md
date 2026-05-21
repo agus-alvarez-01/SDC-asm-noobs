@@ -191,7 +191,11 @@ Podemos utilizar lmod para ver los modulos que tenemos en nuestras PCs:
 
 > Comparar las salidas con las computadoras de cada integrante del grupo. Expliquen las diferencias.
 
-TODO
+Al comparar los módulos cargados (`lsmod`) en nuestros equipos, se evidencian diferencias claras asociadas a la marca de cada notebook y sus componentes de hardware específicos. Por nombrar algunas diferencias tenemos como ejemplo:
+
+* **Fabricante del Equipo (Vendor-Specific):** Cada sistema carga controladores exclusivos de su marca para gestionar la energía, sensores y teclas especiales. el equipo del archivo `jmc` (Juan Manuel Cáceres) carga `ideapad_laptop` y `lenovo_ymc` (Lenovo); el de `aa` (Agustín Álvarez) carga `asus_wmi` y `asus_nb_wmi` (ASUS); y el de `fnh` (Fabián Nicolás Hidalgo) utiliza `hp_wmi` (HP).
+* **Tarjetas de Red Inalámbrica:** Los tres equipos utilizan hardware de Wi-Fi de distintos fabricantes, lo que obliga al kernel a cargar pilas de controladores totalmente diferentes. `jmc` posee una placa Atheros (`ath10k_pci`), `aa` tiene una placa Intel (`iwlwifi`), y `fnh` cuenta con una tarjeta Realtek (`rtw89_8852be`).
+* **Procesamiento Gráfico:** Mientras que los equipos de `jmc` y `fnh` operan exclusivamente con los gráficos integrados de Intel (evidenciado por el módulo `i915`), el equipo de `aa` carga adicionalmente el módulo `nouveau`, indicando la presencia y gestión de una tarjeta gráfica NVIDIA de código abierto.
 
 > Carguen un txt con la salida de cada integrante en el repo y pongan un diff en el informe.
 
@@ -292,7 +296,6 @@ Permite ver el certificado que está a punto de registrar en MOK.
 <img width="1600" height="900" alt="View-key-1" src="https://github.com/user-attachments/assets/ffd20bbd-d40a-4892-bde3-14fd0d0cb7f3" />
 <img width="1600" height="900" alt="View-key-2" src="https://github.com/user-attachments/assets/588c0694-8053-4b86-a4c7-6fb9463e789d" />
 
-
 -> Continue
 
 Confirmar Enroll
@@ -300,7 +303,6 @@ Confirmar Enroll
 -> Yes
 
 <img width="1600" height="900" alt="Confirmacion-de-Enrolar-firma" src="https://github.com/user-attachments/assets/d7edd8a4-7bc0-4f19-b28e-d197aaa0eae6" />
-
 
 Colocar clave temporal, generada anteriormente.
 
@@ -347,11 +349,14 @@ sudo insmod mimodulo.ko
 > Agregar evidencia de la compilación, carga y descarga de su propio módulo imprimiendo el nombre del equipo en los registros del kernel. 
 
 Para imprimir el nombre de nuestro equipo en los registros del kernel, modificamos la linea del `printk()` en `mimodulo.c`
+
 ```C
 printk(KERN_INFO "Modulo cargado en el kernel, por asm_noobs :).\n");
 ```
+
 Compilamos nuevamente con `make`, y firmamos nuevamente **(Paso 4)**.
 Hay que descargar el modulo anterior, cargar el nuevo y verficar:
+
 ```bash
 sudo rmmod mimodulo.ko
 sudo insmod mimodulo.ko
@@ -360,28 +365,24 @@ sudo dmesg
 
 <img width="1232" height="87" alt="firma-asm_noobs" src="https://github.com/user-attachments/assets/6e1ba2b5-cfb8-4790-a37c-98e1525f9809" />
 
-
 > ¿Que pasa si mi compañero con secure boot habilitado intenta cargar un módulo firmado por mi? 
 
 Un módulo firmado por otro usuario no puede cargarse en un sistema con Secure Boot habilitado salvo que la clave pública correspondiente haya sido previamente registrada en la base de confianza MOK del sistema.
 
-...
-
-
 > Dada la siguiente [nota](https://arstechnica.com/security/2024/08/a-patch-microsoft-spent-2-years-preparing-is-making-a-mess-for-some-linux-users/)  
 > ¿Cuál fue la consecuencia principal del parche de Microsoft sobre GRUB en sistemas con arranque dual (Linux y Windows)?
 
-...
+Fue que el parche de seguridad (una actualización de la lista de revocación de certificados de Secure Boot o DBX) provocó que muchos sistemas con arranque dual dejaron de iniciar en Linux. Al intentar arrancar mediante el gestor de arranque GRUB, los usuarios se toparon con un error fatal en pantalla negra que dictaba "Something has gone seriously wrong: SBAT self-check failed: Security Policy Violation", bloqueando por completo el acceso a las distribuciones Linux instaladas.
 
 > Dada la siguiente [nota](https://arstechnica.com/security/2024/08/a-patch-microsoft-spent-2-years-preparing-is-making-a-mess-for-some-linux-users/)  
 > ¿Qué implicancia tiene desactivar Secure Boot como solución al problema descrito en el artículo?
 
-...
+Mitiga temporalmente el bloqueo y permite que el sistema vuelva a cargar GRUB y arrancar Linux sin restricciones. Sin embargo, la implicancia a nivel seguridad es crítica ya que se rompe por completo la cadena de confianza del hardware. Al estar desactivado, el firmware de la placa base ya no valida criptográficamente la autenticidad del bootloader ni del kernel, dejando al sistema expuesto a rootkits de firmware o bootkits maliciosos que podrían cargarse durante el proceso de inicio sin ser detectados.
 
 > Dada la siguiente [nota](https://arstechnica.com/security/2024/08/a-patch-microsoft-spent-2-years-preparing-is-making-a-mess-for-some-linux-users/)  
 > ¿Cuál es el propósito principal del Secure Boot en el proceso de arranque de un sistema?
 
-...
+Es garantizar que un dispositivo arranque utilizando únicamente software en el que confía el fabricante del equipo (Original Equipment Manufacturer u OEM). Esto se logra mediante una verificación de firmas criptográficas donde el firmware de la placa base valida la firma del cargador de arranque (como GRUB o el Windows Boot Manager). Este, a su vez, valida al kernel, y el kernel se encarga de validar los controladores y módulos internos. Si algún componente de este ecosistema fue alterado o no está firmado por una entidad de confianza autorizada, el proceso de inicio se detiene inmediatamente para proteger la integridad del sistema.
 
 ### Referencias
 
