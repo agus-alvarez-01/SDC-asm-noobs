@@ -227,8 +227,7 @@ Una vez obtenida la imagen booteable podemos probar el funcionamiento de esto ut
 
 * **Virtualizacion:** `qemu-system-x86_64 -hda main.img`
 
-> [!IMPORTANT]
-> Imagen QEMU
+<img width="1543" height="336" alt="Screenshot from 2026-05-20 23-14-46" src="https://github.com/user-attachments/assets/fc3830e9-ea2d-494e-a883-1465fda25efb" />
 
 Verificada el correcto funcionamiento de la imagen, procedemos a grabarla en un pendrive para ejecutarla en la PC.
 
