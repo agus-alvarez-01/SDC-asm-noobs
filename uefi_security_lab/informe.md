@@ -374,6 +374,133 @@ Reejecutamos los comandos para cargar la aplicacion efi modificada en el USB y l
 
 <img width="1280" height="720" alt="WhatsApp Image 2026-05-04 at 00 11 15" src="https://github.com/user-attachments/assets/3b987ab0-5aea-4e71-abae-530e08a17c4e" />
 
+### Depuración con GDB
+
+Para comenzar modificamos la aplicacion para facilitar el debuggeo agregando un loop de espera al inicio:
+
+```C
+#include <efi.h>
+#include <efilib.h>
+
+EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) 
+{
+    volatile int waiting = 1;
+    while (waiting) {}
+    
+    InitializeLib(ImageHandle, SystemTable);
+
+    volatile unsigned char code[] = {
+        0xCC
+    };
+    
+    // Envolvemos la llamada directa al protocolo
+    uefi_call_wrapper(SystemTable->ConOut->OutputString, 2, SystemTable->ConOut, L"Iniciando analisis de seguridad...\r\n");
+    
+    // Inyección de un software breakpoint (INT3)
+    if (code[0] == 0xCC) 
+    {
+        uefi_call_wrapper(SystemTable->ConOut->OutputString, 2, SystemTable->ConOut, L"Breakpoint estatico alcanzado.\r\n");
+    }
+    
+    return EFI_SUCCESS;
+}
+```
+
+Se utilizó QEMU con firmware OVMF para emular un entorno UEFI x86-64. La máquina virtual fue iniciada con el servidor GDB habilitado y la CPU detenida al inicio de la ejecución.
+
+Comando utilizado:
+
+```bash
+qemu-system-x86_64 \
+  -m 512 \
+  -bios /usr/share/ovmf/OVMF.fd \
+  -net none \
+  -drive file=fat:rw:./app,format=raw \
+  -s \
+  -S
+```
+
+<img width="1033" height="832" alt="Screenshot from 2026-05-20 23-56-50" src="https://github.com/user-attachments/assets/c88cd168-5458-4959-a277-c7d8dcec1d4c" />
+
+Parámetros relevantes:
+
+* `-s`: habilita el servidor GDB remoto en `localhost:1234`
+* `-S`: pausa la CPU hasta que el debugger continúe la ejecución
+
+En una segunda terminal se inició GDB y se estableció conexión remota con QEMU y se continuo con la ejecucion del hardware hasta que cargara UEFI:
+
+```gdb
+target remote localhost:1234
+continue
+```
+
+Desde la UEFI Shell se ejecutó la aplicación donde se detuvo exactamente dentro de la función principal gracias al loop:
+
+```text
+FS0:\> aplicacion.efi
+```
+<img width="1033" height="832" alt="Screenshot from 2026-05-20 23-57-13" src="https://github.com/user-attachments/assets/08b8976c-1a83-4d20-9c6f-d78c254c6b34" />
+
+Debido a que UEFI carga las imágenes en direcciones dinámicas, fue necesario determinar la dirección real donde la sección `.text` fue cargada en memoria. 
+
+Buscamos en RIP donde cargo UEFI la app:
+
+<img width="423" height="385" alt="Screenshot from 2026-05-20 23-58-56" src="https://github.com/user-attachments/assets/a29e9dc7-cd62-4e9e-8ba8-933816a3c4f1" />
+
+Luego, utilizando `objdump -h aplicacion.so` se determinó que la sección `.text` comenzaba en `0x3000`.
+
+<img width="844" height="58" alt="Screenshot from 2026-05-21 00-04-22" src="https://github.com/user-attachments/assets/694237e4-43c2-4e15-80c0-a05c4bce2d57" />
+
+Con esta información se cargaron los símbolos de depuración `add-symbol-file aplicacion.so 0x1e35b045`
+
+<img width="403" height="95" alt="Screenshot from 2026-05-21 00-08-04" src="https://github.com/user-attachments/assets/90a27558-68f8-459b-84c2-82b4a904d6d7" />
+
+A partir de ese momento GDB pudo resolver correctamente nombres de funciones y mostrar ensamblador asociado al código fuente.
+
+<img width="236" height="95" alt="Screenshot from 2026-05-21 00-08-43" src="https://github.com/user-attachments/assets/e07533b0-3161-4dfd-ae13-0c53754bcc02" />
+
+Colocamos un break mediante `break *0x6500240` y se continuo hasta llegar a el, donde se inspeccionó la función `efi_main` mediante `x/30i $rip`
+
+<img width="1069" height="628" alt="Screenshot from 2026-05-21 00-17-37" src="https://github.com/user-attachments/assets/209c1d8b-5fae-4482-8156-2436e8da961c" />
+
+Durante la ejecución se identificó la instrucción `cmp $0xcc,%al` correspondiente a la validación del byte `0xCC` dentro de la aplicación.
+
+Para verificar el valor utilizado en la comparación se inspeccionó el registro `AL`:
+
+<img width="639" height="754" alt="Screenshot from 2026-05-21 00-19-51" src="https://github.com/user-attachments/assets/aadfdba5-313a-418e-a7dc-25f00d080797" />
+
+Esto confirmó que el valor `0xCC` estaba efectivamente cargado en el registro al momento de la comparación.
+
+Previamente, durante el análisis del ensamblador, se observó la instrucción:
+
+```asm
+movb   $0xcc,-0x5(%rbp)
+```
+
+<img width="628" height="244" alt="Screenshot from 2026-05-21 00-14-31" src="https://github.com/user-attachments/assets/411bf820-ad8d-4c31-8771-68ae84df14d6" />
+
+indicando que el byte `0xCC` había sido almacenado en la pila local de la función.
+
+Se inspeccionó la memoria correspondiente mediante `x/1bx $rbp-0x5` obteniéndose `0xcc`
+
+<img width="627" height="247" alt="Screenshot from 2026-05-21 00-24-51" src="https://github.com/user-attachments/assets/c7b74993-61c4-4b10-8532-31db375c60af" />
+
+Esto permitió verificar dinámicamente tanto:
+
+* la escritura del byte `0xCC` en memoria
+* como su posterior comparación mediante registros de CPU
+
+Se logró:
+
+* Conectar exitosamente GDB a QEMU mediante debugging remoto
+* Ejecutar y depurar una aplicación UEFI en entorno OVMF
+* Cargar símbolos de depuración dinámicamente
+* Inspeccionar instrucciones ensamblador en tiempo real
+* Analizar registros y memoria del proceso
+* Identificar y verificar dinámicamente el opcode `0xCC`
+* Detener la ejecución exactamente en la instrucción `cmp $0xcc,%al`
+* Confirmar que el registro `AL` contenía el valor `0xCC`
+
 ### Referencias
 
 > [UEFI](https://uefi.org/specs/UEFI/2.10/index.html)
