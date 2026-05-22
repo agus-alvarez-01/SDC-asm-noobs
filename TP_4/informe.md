@@ -61,6 +61,8 @@ Los rootkits de kernel son especialmente peligrosos porque operan con privilegio
 
 Entre las cosas que pueden realizar encontramos que pueden interceptar syscalls, ocultar procesos, ocultar archivos, ocultar conexiones de red y alterar logs.
 
+---
+
 ### Desafio #2
 
 > ¿Qué funciones tiene disponible un programa y un módulo?
@@ -117,6 +119,8 @@ Asi por ejemplo tenemos:
 | `/dev/urandom` | números pseudoaleatorios |
 | `/dev/input/*` | dispositivos de entrada  |
 | `/dev/snd/*`   | audio                    |
+
+---
 
 ### Modulos
 
@@ -189,17 +193,13 @@ Podemos utilizar lmod para ver los modulos que tenemos en nuestras PCs:
 
 <img width="1003" height="911" alt="Screenshot from 2026-05-19 01-39-36" src="https://github.com/user-attachments/assets/a43dbb80-cab3-46be-ac3c-b601aff2a2ee" />
 
-> Comparar las salidas con las computadoras de cada integrante del grupo. Expliquen las diferencias.
+> Comparar las salidas con las computadoras de cada integrante del grupo. Expliquen las diferencias. Carguen un txt con la salida de cada integrante en el repo y pongan un diff en el informe.
 
 Al comparar los módulos cargados (`lsmod`) en nuestros equipos, se evidencian diferencias claras asociadas a la marca de cada notebook y sus componentes de hardware específicos. Por nombrar algunas diferencias tenemos como ejemplo:
 
 * **Fabricante del Equipo (Vendor-Specific):** Cada sistema carga controladores exclusivos de su marca para gestionar la energía, sensores y teclas especiales. el equipo del archivo `jmc` (Juan Manuel Cáceres) carga `ideapad_laptop` y `lenovo_ymc` (Lenovo); el de `aa` (Agustín Álvarez) carga `asus_wmi` y `asus_nb_wmi` (ASUS); y el de `fnh` (Fabián Nicolás Hidalgo) utiliza `hp_wmi` (HP).
 * **Tarjetas de Red Inalámbrica:** Los tres equipos utilizan hardware de Wi-Fi de distintos fabricantes, lo que obliga al kernel a cargar pilas de controladores totalmente diferentes. `jmc` posee una placa Atheros (`ath10k_pci`), `aa` tiene una placa Intel (`iwlwifi`), y `fnh` cuenta con una tarjeta Realtek (`rtw89_8852be`).
 * **Procesamiento Gráfico:** Mientras que los equipos de `jmc` y `fnh` operan exclusivamente con los gráficos integrados de Intel (evidenciado por el módulo `i915`), el equipo de `aa` carga adicionalmente el módulo `nouveau`, indicando la presencia y gestión de una tarjeta gráfica NVIDIA de código abierto.
-
-> Carguen un txt con la salida de cada integrante en el repo y pongan un diff en el informe.
-
-WIP
 
 > ¿Cuales no están cargados pero están disponibles?
 
@@ -345,7 +345,6 @@ sudo insmod mimodulo.ko
 > [!NOTE]
 > Para poder realizar el proceso, el secure boot debe estar activo. Se puede comprobar con `mokutil --sb-state`, y Platform Mode en User Mode, no en Setup Mode.
 
-
 > Agregar evidencia de la compilación, carga y descarga de su propio módulo imprimiendo el nombre del equipo en los registros del kernel. 
 
 Para imprimir el nombre de nuestro equipo en los registros del kernel, modificamos la linea del `printk()` en `mimodulo.c`
@@ -369,20 +368,40 @@ sudo dmesg
 
 Un módulo firmado por otro usuario no puede cargarse en un sistema con Secure Boot habilitado salvo que la clave pública correspondiente haya sido previamente registrada en la base de confianza MOK del sistema.
 
+Al intentar insertarlo la terminal le devolverá un error muy específico, que normalmente se ve así:
+
+```insmod: ERROR: could not insert module mi_modulo.ko: Required key not available```
+
+El kernel detecto que el módulo está firmado, entonces busca la clave pública correspondiente en su "lista de confianza" y vomo la firma se hizo con una clave privada que no está en su lista, el kernel asume que el módulo es un riesgo de seguridad y bloquea su ejecución.
+
 > Dada la siguiente [nota](https://arstechnica.com/security/2024/08/a-patch-microsoft-spent-2-years-preparing-is-making-a-mess-for-some-linux-users/)  
 > ¿Cuál fue la consecuencia principal del parche de Microsoft sobre GRUB en sistemas con arranque dual (Linux y Windows)?
 
-Fue que el parche de seguridad (una actualización de la lista de revocación de certificados de Secure Boot o DBX) provocó que muchos sistemas con arranque dual dejaron de iniciar en Linux. Al intentar arrancar mediante el gestor de arranque GRUB, los usuarios se toparon con un error fatal en pantalla negra que dictaba "Something has gone seriously wrong: SBAT self-check failed: Security Policy Violation", bloqueando por completo el acceso a las distribuciones Linux instaladas.
+Fue que el parche de seguridad (una actualización de la lista de revocación de certificados de Secure Boot o DBX) provocó que muchos sistemas con arranque dual dejaron de iniciar en Linux. 
+
+Al intentar arrancar mediante el gestor de arranque GRUB, los usuarios se toparon con un error fatal en pantalla negra que dictaba "Something has gone seriously wrong: SBAT self-check failed: Security Policy Violation", bloqueando por completo el acceso a las distribuciones Linux instaladas.
 
 > Dada la siguiente [nota](https://arstechnica.com/security/2024/08/a-patch-microsoft-spent-2-years-preparing-is-making-a-mess-for-some-linux-users/)  
 > ¿Qué implicancia tiene desactivar Secure Boot como solución al problema descrito en el artículo?
 
-Mitiga temporalmente el bloqueo y permite que el sistema vuelva a cargar GRUB y arrancar Linux sin restricciones. Sin embargo, la implicancia a nivel seguridad es crítica ya que se rompe por completo la cadena de confianza del hardware. Al estar desactivado, el firmware de la placa base ya no valida criptográficamente la autenticidad del bootloader ni del kernel, dejando al sistema expuesto a rootkits de firmware o bootkits maliciosos que podrían cargarse durante el proceso de inicio sin ser detectados.
+Mitiga temporalmente el bloqueo y permite que el sistema vuelva a cargar GRUB y arrancar Linux sin restricciones. 
+
+Sin embargo, la implicancia a nivel seguridad es crítica ya que se rompe por completo la cadena de confianza del hardware. 
+
+Al estar desactivado, el firmware de la placa base ya no valida criptográficamente la autenticidad del bootloader ni del kernel, dejando al sistema expuesto a rootkits de firmware o bootkits maliciosos que podrían cargarse durante el proceso de inicio sin ser detectados.
 
 > Dada la siguiente [nota](https://arstechnica.com/security/2024/08/a-patch-microsoft-spent-2-years-preparing-is-making-a-mess-for-some-linux-users/)  
 > ¿Cuál es el propósito principal del Secure Boot en el proceso de arranque de un sistema?
 
-Es garantizar que un dispositivo arranque utilizando únicamente software en el que confía el fabricante del equipo (Original Equipment Manufacturer u OEM). Esto se logra mediante una verificación de firmas criptográficas donde el firmware de la placa base valida la firma del cargador de arranque (como GRUB o el Windows Boot Manager). Este, a su vez, valida al kernel, y el kernel se encarga de validar los controladores y módulos internos. Si algún componente de este ecosistema fue alterado o no está firmado por una entidad de confianza autorizada, el proceso de inicio se detiene inmediatamente para proteger la integridad del sistema.
+Es garantizar que un dispositivo arranque utilizando únicamente software en el que confía el fabricante del equipo (Original Equipment Manufacturer u OEM). 
+
+Esto se logra mediante una verificación de firmas criptográficas donde el firmware de la placa base valida la firma del cargador de arranque (como GRUB o el Windows Boot Manager). 
+
+Este, a su vez, valida al kernel, y el kernel se encarga de validar los controladores y módulos internos. 
+
+Si algún componente de este ecosistema fue alterado o no está firmado por una entidad de confianza autorizada, el proceso de inicio se detiene inmediatamente para proteger la integridad del sistema.
+
+---
 
 ### Referencias
 
@@ -391,8 +410,6 @@ Es garantizar que un dispositivo arranque utilizando únicamente software en el 
 > [Kernel Module](https://sysprog21.github.io/lkmpg/#what-is-a-kernel-module)
 
 > [Strace](https://opensource.com/article/19/10/strace)
-
-> [???](https://docs.google.com/presentation/d/1BYES6Zkfx5K85REWyXsFeW-VngBLOzlDzaYCsTVoc0Y/edit#slide=id.g724a4c87a0_0_5 )
 
 > [Sign Kernel](https://askubuntu.com/questions/770205/how-to-sign-kernel-modules-with-sign-file)
 
