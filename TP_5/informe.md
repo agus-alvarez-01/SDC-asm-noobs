@@ -159,3 +159,25 @@ Hasta este punto el módulo existía dentro del kernel pero Linux todavía no sa
 
 > [!IMPORTANT]
 > Foto de validacion
+
+#### File Operations
+
+Una vez registrado el dispositivo se definio qué acciones realizaría el driver cuando un programa de usuario intentara interactuar con él.
+
+En Linux todas las operaciones de un Character Device se describen mediante la estructura `struct file_operations` que funciona como una tabla de funciones que el kernel invoca automáticamente cuando ocurre alguna operación sobre el archivo del dispositivo.
+
+Implementamos las operaciones minimas necesarias `open`, `release`, `read` y `write` para la comunicación user-space y kernel-space.
+
+La estructura quedó definida como:
+
+```C
+static struct file_operations fops = {
+    .owner = THIS_MODULE,
+    .open = tp_open,
+    .release = tp_release,
+    .read = tp_read,
+    .write = tp_write,
+};
+```
+
+A partir de aquí cualquier programa que accediera a `/dev/tp_driver` ejecutaría automáticamente las funciones correspondientes del módulo.
