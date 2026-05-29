@@ -4,6 +4,7 @@
 #include <linux/cdev.h>
 #include <linux/random.h>
 #include <linux/timer.h>
+#include <linux/uaccess.h>
 
 #define DEVICE_NAME "asmn_driver"
 
@@ -11,6 +12,7 @@ static dev_t dev_num;
 static struct cdev asmn_cdev;
 static struct timer_list asmn_timer;
 
+static int selected_channel = 0;
 static int signal_0 = 0;
 static int signal_1 = 0;
 
@@ -44,8 +46,23 @@ static int asmn_release(struct inode *inode, struct file *file)
 
 static ssize_t asmn_read(struct file *file, char __user *buf, size_t len, loff_t *off)
 {
-    printk(KERN_INFO "ASMN Driver read value: %d\n", signal_1);
-    return 0;
+    char message[64];
+
+    int value;
+    int bytes;
+
+    if (*off > 0) return 0;
+
+    if (selected_channel == 0) value = signal_0;
+    else value = signal_1;
+
+    bytes = sprintf(message, "%d: %d\n", counter, value);
+
+    if (copy_to_user(buf, message, bytes)) return -EFAULT;
+
+    *off += bytes;
+
+    return bytes;
 }
 
 static ssize_t asmn_write(struct file *file, const char __user *buf, size_t len, loff_t *off)

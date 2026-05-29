@@ -164,6 +164,13 @@ Hasta este punto el módulo existía dentro del kernel pero Linux todavía no sa
 > [!IMPORTANT]
 > Foto de validacion
 
+Inicialmente generamos el archivo asociado dentro de dev de forma manual dentro del script:
+
+```bash
+sudo mknod ${DEVICE_NAME} c ${MAJOR} 0
+sudo chmod 666 ${DEVICE_NAME}
+```
+
 #### File Operations
 
 Una vez registrado el dispositivo se definio qué acciones realizaría el driver cuando un programa de usuario intentara interactuar con él.
@@ -254,3 +261,43 @@ Esto permitió que el driver funcionara de manera autónoma generando nuevas mue
 
 > [!IMPORTANT]
 > Foto de validacion
+
+#### Lectura de Señales
+
+Una vez que el driver ya generaba señales periódicamente el siguiente paso fue permitir que un programa de usuario pudiera leerlas.
+
+Para esto se completo la funcion `asmn_read()` para identificar qué canal estaba seleccionado, obtener el valor correspondiente, formatearlo como texto y copiarlo a user-space.
+
+```C
+static ssize_t asmn_read(struct file *file, char __user *buf, size_t len, loff_t *off)
+{
+    char message[64];
+
+    int value;
+    int bytes;
+
+    if (*off > 0) return 0;
+
+    if (selected_channel == 0) value = signal_0;
+    else value = signal_1;
+
+    bytes = sprintf(message, "%d,%d\n", counter, value);
+
+    if (copy_to_user(buf, message, bytes)) return -EFAULT;
+
+    *off += bytes;
+
+    return bytes;
+}
+```
+
+Vemos ahora como haciendo `cat /dev/asmn_driver` en el paso doce de validacion podemos leer los valores sensados:
+
+> [!IMPORTANT]
+> Foto de validacion
+
+La copia de memoria se realizó utilizando `copy_to_user()` porque el kernel no puede acceder directamente a memoria de usuario de manera segura.
+
+Durante esta etapa apareció un problema importante donde `cat` realizaba múltiples lecturas sucesivas porque el kernel esperaba recibir un EOF.
+
+La solución consistió en utilizar `if (*off > 0) return 0;` para indicar correctamente el final de archivo luego de una lectura completa.
