@@ -44,14 +44,14 @@ Implementado mediante un Character Device Driver, que tiene como responsabilidad
 
 Aplicacion Python encargada de:
 
-- Leer datos desde `/dev/tp_driver`
+- Leer datos desde `/dev/asmn_driver`
 - Graficar la señal.
 - Permitir cambio de canal.
 - Resetear el grafico.
 
 ```mermaid
 flowchart LR
-    App["Aplicacion Python"] -- "read/write" --> Dev["/dev/tp_driver"]
+    App["Aplicacion Python"] -- "read/write" --> Dev["/dev/asmn_driver"]
     Dev --> Driver["Character Driver"]
     Driver --> S0("Señal 0")
     Driver --> S1("Señal 1")
@@ -101,15 +101,19 @@ Para validar cada etapa del modulo se genero un makefile y un script para permit
 > [!IMPORTANT]
 > Foto de validacion
 
+Este módulo solo es código cargado en kernel-space que no existe /dev, nadie puede usarlo y no hay archivo.
+
 #### Character Device Driver
 
-Una vez validado el modulo basico el siguiente paso fue convertirlo en un Character Device Driver. 
+Una vez validado el modulo basico el siguiente paso fue convertirlo en un Character Device Driver. El CDD es la interfaz que Linux usa para hablar con el módulo.
 
-Para que Linux pueda asociar un archivo dentro de `/dev` con nuestro driver fue necesario registrar un numero major, minor.
+Para que Linux pueda asociar un archivo dentro de `/dev` con nuestro driver fue necesario registrar un numero major,minor.
 
 El numero major identifica al driver dentro del kernel mientras que el minor identifica una instancia específica del dispositivo.
 
 Para esto se utilizó `alloc_chrdev_region()` porque permite que el kernel asigne automáticamente un major libre evitando conflictos con otros dispositivos del sistema.
+
+Aqui le estamos diciendo al kernel que este módulo sabe manejar un dispositivo de caracteres.
 
 Al codigo incorporamos la estructura `struct cdev` la cual representa internamente el dispositivo de caracteres dentro del kernel.
 
@@ -173,11 +177,80 @@ La estructura quedó definida como:
 ```C
 static struct file_operations fops = {
     .owner = THIS_MODULE,
-    .open = tp_open,
-    .release = tp_release,
-    .read = tp_read,
-    .write = tp_write,
+    .open = asmn_open,
+    .release = asmn_release,
+    .read = asmn_read,
+    .write = asmn_write,
 };
 ```
 
-A partir de aquí cualquier programa que accediera a `/dev/tp_driver` ejecutaría automáticamente las funciones correspondientes del módulo.
+A partir de aquí cualquier programa que accediera a `/dev/asmn_driver` ejecutaría automáticamente las funciones correspondientes del módulo.
+
+Por ejemplo `cat /dev/asmn_driver` genera internamente `open()`, `read()` y `release()`.
+
+> [!IMPORTANT]
+> Foto de validacion
+
+#### Generacion de Señales
+
+Una vez establecida la comunicación básica el siguiente objetivo fue incorporar las señales requeridas por el TP.
+
+En lugar de utilizar hardware real desde el comienzo se decidió generar señales simuladas dentro del kernel.
+
+Se implementaron dos señales para disponer de dos fuentes de datos diferentes sobre las cuales trabajar.
+- Señal 0 : Una señal periódica creciente simulando una onda.
+- Señal 1 : Una señal aleatoria utilizando `prandom_u32()`.
+
+```C
+static int signal_0 = 0;
+static int signal_1 = 0;
+
+static int counter = 0;
+
+static void generate_signals(void)
+{
+    signal_0 = (counter % 20) * 5;
+    signal_1 = get_random_u32() % 100;
+    counter++;
+}
+```
+
+Asi podemos ver en la lectura el valor generado por la señal simulada:
+
+> [!IMPORTANT]
+> Foto de validacion
+
+Para que las señales fueran muestreadas cada 1 segundo se implementó un timer del kernel utilizando `struct timer_list`.
+
+El timer fue configurado para ejecutar periódicamente la generacion de las señales.
+
+Posteriormente el timer se rearmaba utilizando `mod_timer()`.
+
+```C
+static void timer_callback(struct timer_list *t)
+{
+    generate_signals();
+    printk(KERN_INFO "Signal0=%d Signal1=%d\n", signal_0, signal_1);
+    mod_timer(&asmn_timer, jiffies + msecs_to_jiffies(1000));
+}
+
+static int __init asmn_init(void)
+{
+    alloc_chrdev_region(&dev_num, 0, 1, DEVICE_NAME);
+
+    cdev_init(&asmn_cdev, &fops);
+    cdev_add(&asmn_cdev, dev_num, 1);
+
+    timer_setup(&asmn_timer, timer_callback, 0);
+    mod_timer(&asmn_timer, jiffies + msecs_to_jiffies(1000));
+
+    printk(KERN_INFO "ASMN Driver registered. Major=%d\n", MAJOR(dev_num));
+
+    return 0;
+}
+```
+
+Esto permitió que el driver funcionara de manera autónoma generando nuevas muestras periódicamente sin intervención de la aplicación de usuario.
+
+> [!IMPORTANT]
+> Foto de validacion

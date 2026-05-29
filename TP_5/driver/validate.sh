@@ -19,6 +19,8 @@ sudo rm -f ${DEVICE_NAME}
 
 sudo dmesg -C || true
 
+make clean
+
 echo
 echo "[OK] Previous state cleaned"
 echo
@@ -26,7 +28,6 @@ echo "============================================================"
 echo " STEP 1 - Building module"
 echo "============================================================"
 
-make clean
 make
 
 echo
