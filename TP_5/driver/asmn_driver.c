@@ -5,11 +5,14 @@
 #include <linux/random.h>
 #include <linux/timer.h>
 #include <linux/uaccess.h>
+#include <linux/device.h>
 
 #define DEVICE_NAME "asmn_driver"
 
 static dev_t dev_num;
 static struct cdev asmn_cdev;
+static struct class *asmn_class;
+
 static struct timer_list asmn_timer;
 
 static int selected_channel = 0;
@@ -30,6 +33,12 @@ static void timer_callback(struct timer_list *t)
     generate_signals();
     printk(KERN_INFO "Signal0=%d Signal1=%d\n", signal_0, signal_1);
     mod_timer(&asmn_timer, jiffies + msecs_to_jiffies(1000));
+}
+
+static char *asmn_devnode(const struct device *dev, umode_t *mode)
+{
+    if (mode) *mode = 0666;
+    return NULL;
 }
 
 static int asmn_open(struct inode *inode, struct file *file)
@@ -96,6 +105,10 @@ static int __init asmn_init(void)
     cdev_init(&asmn_cdev, &fops);
     cdev_add(&asmn_cdev, dev_num, 1);
 
+    asmn_class = class_create("asmn_class");
+    asmn_class->devnode = asmn_devnode;
+    device_create(asmn_class, NULL, dev_num, NULL, DEVICE_NAME);
+
     timer_setup(&asmn_timer, timer_callback, 0);
     mod_timer(&asmn_timer, jiffies + msecs_to_jiffies(1000));
 
@@ -106,11 +119,15 @@ static int __init asmn_init(void)
 
 static void __exit asmn_exit(void)
 {
+    del_timer(&asmn_timer);
+
+    device_destroy(asmn_class, dev_num);
+
+    class_destroy(asmn_class);
+
     cdev_del(&asmn_cdev);
 
     unregister_chrdev_region(dev_num, 1);
-
-    del_timer(&asmn_timer);
 
     printk(KERN_INFO "ASMN Driver unloaded\n");
 }

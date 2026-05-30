@@ -64,28 +64,6 @@ cat /proc/devices | grep ${MODULE_NAME} || true
 
 echo
 echo "============================================================"
-echo " STEP 5.1 - Creating device node manually"
-echo "============================================================"
-
-MAJOR=$(cat /proc/devices | grep ${MODULE_NAME} | awk '{print $1}')
-
-if [ -z "${MAJOR}" ]; then
-    echo "[ERROR] Could not find major number"
-    exit 1
-fi
-
-if [ ! -e ${DEVICE_NAME} ]; then
-    sudo mknod ${DEVICE_NAME} c ${MAJOR} 0
-    sudo chmod 666 ${DEVICE_NAME}
-    echo
-    echo "[OK] Device node created"
-else
-    echo
-    echo "[OK] Device node already exists"
-fi
-
-echo
-echo "============================================================"
 echo " STEP 6 - Checking /dev entry"
 echo "============================================================"
 

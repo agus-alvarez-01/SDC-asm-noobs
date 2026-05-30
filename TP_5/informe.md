@@ -301,3 +301,138 @@ La copia de memoria se realizó utilizando `copy_to_user()` porque el kernel no 
 Durante esta etapa apareció un problema importante donde `cat` realizaba múltiples lecturas sucesivas porque el kernel esperaba recibir un EOF.
 
 La solución consistió en utilizar `if (*off > 0) return 0;` para indicar correctamente el final de archivo luego de una lectura completa.
+
+#### Seleccion de Canal
+
+Para permitir que la aplicación seleccionara cuál señal leer se completo la implementacion de `asmn_write()`.
+
+La idea fue utilizar el archivo `/dev/asmn_driver` también como mecanismo de configuración.
+
+Se utilizo `copy_from_user()` para copiar el dato enviado desde user-space hacia memoria del kernel, y en baseo a eso actualizamos `selected_channel`. 
+
+```C
+static ssize_t asmn_write(struct file *file, const char __user *buf, size_t len, loff_t *off)
+{
+    char kbuf[8];
+
+    if (copy_from_user(kbuf, buf, len))return -EFAULT;
+
+    kbuf[len] = '\0';
+
+    if (kbuf[0] == '0') selected_channel = 0;
+    else if (kbuf[0] == '1')selected_channel = 1;
+
+    printk(KERN_INFO "Selected channel: %d\n", selected_channel);
+
+    return len;
+}
+```
+
+Aqui logramos una comunicación bidireccional entre user-space y kernel.
+
+Ahora con echo `0 > /dev/tp_driver` podemos seleccionar el canal cero y con `echo 1 > /dev/tp_driver` podemos seleccionar el canal uno.
+
+> [!IMPORTANT]
+> Foto de validacion
+
+#### Generacion Automatica de \dev
+
+Hasta ahora el dispositivo existía dentro del kernel, pero todavía no aparecía automáticamente dentro de /dev, esto lo realizabamos de forma manual en el script:
+
+```bash
+echo "============================================================"
+echo " STEP 5.1 - Creating device node manually"
+echo "============================================================"
+
+MAJOR=$(cat /proc/devices | grep ${MODULE_NAME} | awk '{print $1}')
+
+if [ -z "${MAJOR}" ]; then
+    echo "[ERROR] Could not find major number"
+    exit 1
+fi
+
+if [ ! -e ${DEVICE_NAME} ]; then
+    sudo mknod ${DEVICE_NAME} c ${MAJOR} 0
+    sudo chmod 666 ${DEVICE_NAME}
+    echo
+    echo "[OK] Device node created"
+else
+    echo
+    echo "[OK] Device node already exists"
+fi
+```
+
+Para automatizar esto se utilizo `class_create()` y `device_create()` que registran el dispositivo dentro de `sysfs` permitiendo que `udev` cree automáticamente `/dev/asmn_driver`.
+
+```C
+static int __init asmn_init(void)
+{
+    alloc_chrdev_region(&dev_num, 0, 1, DEVICE_NAME);
+
+    cdev_init(&asmn_cdev, &fops);
+    cdev_add(&asmn_cdev, dev_num, 1);
+
+    asmn_class = class_create("asmn_class");
+    device_create(asmn_class, NULL, dev_num, NULL, DEVICE_NAME);
+
+    timer_setup(&asmn_timer, timer_callback, 0);
+    mod_timer(&asmn_timer, jiffies + msecs_to_jiffies(1000));
+
+    printk(KERN_INFO "ASMN Driver registered. Major=%d\n", MAJOR(dev_num));
+
+    return 0;
+}
+```
+
+Esto tiene una correspondencia para destruir el dispositivo al quitar el modulo:
+
+```C
+static void __exit asmn_exit(void)
+{
+    del_timer(&asmn_timer);
+
+    device_destroy(asmn_class, dev_num);
+
+    class_destroy(asmn_class);
+
+    cdev_del(&asmn_cdev);
+
+    unregister_chrdev_region(dev_num, 1);
+
+    printk(KERN_INFO "ASMN Driver unloaded\n");
+}
+```
+
+Ante una primera ejecucion nos encontramos con falta de permisos:
+
+> [!IMPORTANT]
+> Foto de validacion
+
+Esto es porque eliminamos `sudo chmod 666 ${DEVICE_NAME}` del script que otorgaba los permisos de lectura y escritura.
+
+Para resolver esto desde codigo definimos un callback para cargar en `devnode` de la clase creada, que otorgue estos permisos:
+
+```C
+static char *asmn_devnode(const struct device *dev, umode_t *mode)
+{
+    if (mode) *mode = 0666;
+    return NULL;
+}
+
+static int __init asmn_init(void)
+{
+    ...
+    asmn_class = class_create("asmn_class");
+    asmn_class->devnode = asmn_devnode;
+    ...
+}
+```
+
+Con este ajuste al ejecutar podemos ver como se genera automaticamente el archivo dentro de `dev` y se ejecutan todas las funcionalidades:
+
+> [!IMPORTANT]
+> Foto de validacion
+
+Asi se integraron todas las partes desarrolladas, el módulo del kernel, el registro del device, las operaciones del dispositivo, el timer, la generación de señales, la lectura y escritura, y la creación automática de `/dev`.
+
+El resultado final fue un Character Device Driver completamente funcional capaz de generar dos señales, muestrearlas periódicamente, permitir selección dinámica de canal y entregar datos a aplicaciones de usuario mediante `/dev/asmn_driver`.
