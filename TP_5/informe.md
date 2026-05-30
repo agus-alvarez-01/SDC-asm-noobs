@@ -98,8 +98,7 @@ Inicialmente el modulo solamente imprimía mensajes utilizando `printk()` para v
 
 Para validar cada etapa del modulo se genero un makefile y un script para permitirnos visualizar la carga, descarga y ejecucion del modulo.
 
-> [!IMPORTANT]
-> Foto de validacion
+<img width="524" height="620" alt="Screenshot from 2026-05-28 22-48-19" src="https://github.com/user-attachments/assets/bf96331f-d3e7-48a5-a31b-64c2abd1efc1" />
 
 Este módulo solo es código cargado en kernel-space que no existe /dev, nadie puede usarlo y no hay archivo.
 
@@ -161,8 +160,7 @@ MODULE_DESCRIPTION("TP5 Character Device Driver");
 
 Hasta este punto el módulo existía dentro del kernel pero Linux todavía no sabía cómo interactuar con él como dispositivo.
 
-> [!IMPORTANT]
-> Foto de validacion
+<img width="496" height="345" alt="Screenshot from 2026-05-28 22-50-59" src="https://github.com/user-attachments/assets/9f23a879-afee-49a6-85b4-208c10fa047a" />
 
 Inicialmente generamos el archivo asociado dentro de dev de forma manual dentro del script:
 
@@ -195,8 +193,7 @@ A partir de aquí cualquier programa que accediera a `/dev/asmn_driver` ejecutar
 
 Por ejemplo `cat /dev/asmn_driver` genera internamente `open()`, `read()` y `release()`.
 
-> [!IMPORTANT]
-> Foto de validacion
+<img width="497" height="770" alt="Screenshot from 2026-05-28 22-53-00" src="https://github.com/user-attachments/assets/cfe6073e-2018-4205-9194-e6c4f21babd5" />
 
 #### Generacion de Señales
 
@@ -222,10 +219,9 @@ static void generate_signals(void)
 }
 ```
 
-Asi podemos ver en la lectura el valor generado por la señal simulada:
+Asi podemos ver el valor generado por la señal simulada:
 
-> [!IMPORTANT]
-> Foto de validacion
+<img width="493" height="124" alt="Screenshot from 2026-05-29 00-22-37" src="https://github.com/user-attachments/assets/0f011820-54cc-447e-afbd-12357c59f33d" />
 
 Para que las señales fueran muestreadas cada 1 segundo se implementó un timer del kernel utilizando `struct timer_list`.
 
@@ -259,8 +255,7 @@ static int __init asmn_init(void)
 
 Esto permitió que el driver funcionara de manera autónoma generando nuevas muestras periódicamente sin intervención de la aplicación de usuario.
 
-> [!IMPORTANT]
-> Foto de validacion
+<img width="499" height="574" alt="Screenshot from 2026-05-29 00-34-47" src="https://github.com/user-attachments/assets/9d95b3ae-0ddd-4f2c-9d27-e1a83775c50a" />
 
 #### Lectura de Señales
 
@@ -293,8 +288,7 @@ static ssize_t asmn_read(struct file *file, char __user *buf, size_t len, loff_t
 
 Vemos ahora como haciendo `cat /dev/asmn_driver` en el paso doce de validacion podemos leer los valores sensados:
 
-> [!IMPORTANT]
-> Foto de validacion
+<img width="503" height="140" alt="Screenshot from 2026-05-29 19-49-54" src="https://github.com/user-attachments/assets/0875076d-7d30-4756-912c-4dc5211a6670" />
 
 La copia de memoria se realizó utilizando `copy_to_user()` porque el kernel no puede acceder directamente a memoria de usuario de manera segura.
 
@@ -332,8 +326,7 @@ Aqui logramos una comunicación bidireccional entre user-space y kernel.
 
 Ahora con echo `0 > /dev/tp_driver` podemos seleccionar el canal cero y con `echo 1 > /dev/tp_driver` podemos seleccionar el canal uno.
 
-> [!IMPORTANT]
-> Foto de validacion
+<img width="503" height="349" alt="Screenshot from 2026-05-29 21-30-54" src="https://github.com/user-attachments/assets/51f9f2cb-f86b-4f5e-88be-a9a6d9763c2e" />
 
 #### Generacion Automatica de \dev
 
@@ -405,8 +398,8 @@ static void __exit asmn_exit(void)
 
 Ante una primera ejecucion nos encontramos con falta de permisos:
 
-> [!IMPORTANT]
-> Foto de validacion
+<img width="498" height="690" alt="Screenshot from 2026-05-29 21-49-05" src="https://github.com/user-attachments/assets/47723e1f-1d15-40a3-a167-5f45bb29e6e8" />
+<img width="496" height="77" alt="Screenshot from 2026-05-29 21-49-40" src="https://github.com/user-attachments/assets/6b6fdce3-35d6-485b-ba31-916ffb9d859d" />
 
 Esto es porque eliminamos `sudo chmod 666 ${DEVICE_NAME}` del script que otorgaba los permisos de lectura y escritura.
 
@@ -430,8 +423,7 @@ static int __init asmn_init(void)
 
 Con este ajuste al ejecutar podemos ver como se genera automaticamente el archivo dentro de `dev` y se ejecutan todas las funcionalidades:
 
-> [!IMPORTANT]
-> Foto de validacion
+<img width="491" height="803" alt="Screenshot from 2026-05-29 21-49-55" src="https://github.com/user-attachments/assets/9b1b32f1-1324-4a0b-816d-005f62deff27" />
 
 Asi se integraron todas las partes desarrolladas, el módulo del kernel, el registro del device, las operaciones del dispositivo, el timer, la generación de señales, la lectura y escritura, y la creación automática de `/dev`.
 
