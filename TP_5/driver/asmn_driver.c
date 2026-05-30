@@ -67,7 +67,17 @@ static ssize_t asmn_read(struct file *file, char __user *buf, size_t len, loff_t
 
 static ssize_t asmn_write(struct file *file, const char __user *buf, size_t len, loff_t *off)
 {
-    printk(KERN_INFO "WIP\n");
+    char kbuf[8];
+
+    if (copy_from_user(kbuf, buf, len))return -EFAULT;
+
+    kbuf[len] = '\0';
+
+    if (kbuf[0] == '0') selected_channel = 0;
+    else if (kbuf[0] == '1')selected_channel = 1;
+
+    printk(KERN_INFO "Selected channel: %d\n", selected_channel);
+
     return len;
 }
 
